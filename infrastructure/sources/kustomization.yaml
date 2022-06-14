@@ -4,3 +4,7 @@ namespace: flux-system
 resources:
   - bitnami.yaml
   - podinfo.yaml
+  - apiseven.yaml
+  - dapr.yaml
+  - emqx.yaml
+  - jetstack.yaml
