@@ -1,0 +1,26 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "apisix-dashboard-ingress"
+  namespace: ingress-apisix
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: global-issuer
+spec:
+  ingressClassName: apisix
+  tls:
+    - hosts:
+        - dashboard.glegal.local
+      secretName: apisix-dashboard-cert
+  rules:
+    - host: "dashboard.glegal.local"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "apisix-dashboard"
+                port:
+                  number: 80
