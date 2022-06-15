@@ -3,6 +3,7 @@ kind: Kustomization
 
 bases:
   - ./certs
+  - ./apisix
   - ./dapr
   - ./podinfo
   - ./quote
