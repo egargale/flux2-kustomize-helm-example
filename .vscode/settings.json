@@ -1,5 +1,5 @@
 {
   "yaml.schemas": {
-    "https://json.schemastore.org/kustomization.json": "file:///home/enrico/projects/flux2-kustomize-helm-example/infrastructure/apisix/release.yaml"
+    "https://raw.githubusercontent.com/rancher/k3d/main/pkg/config/config.versions.schema.json": "file:///home/enrico/projects/flux2-kustomize-helm-example/infrastructure/apisix/release.yaml"
   }
 }

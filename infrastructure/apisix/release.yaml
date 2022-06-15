@@ -6,10 +6,10 @@ spec:
   releaseName: apisix
   chart:
     spec:
-      chart: redis
+      chart: apisix
       sourceRef:
         kind: HelmRepository
-        name: bitnami
+        name: apiseven
         namespace: flux-system
       # version: "0.x"
   interval: 1h0m0s
