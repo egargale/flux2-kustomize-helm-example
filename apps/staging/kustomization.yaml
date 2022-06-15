@@ -6,3 +6,4 @@ bases:
   - ./dapr
   - ./podinfo
   - ./quote
+  - ./emqx

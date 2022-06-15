@@ -1,16 +1,11 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
-# commonLabels:
-#   app: quote
-#   demo: kustomize-cert-manager
-
 namespace: quote
 
+commonLabels:
+  app: quote
+  demo: staging-demo
+
 resources:
-  - namespace.yaml
-  - deployment.yaml
-  - service.yaml
-  # - apisixroute2.yaml
-  # - certificate.yaml
+  - ../../base/quote
   - ingress.yaml

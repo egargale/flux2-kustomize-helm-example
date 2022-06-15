@@ -1,0 +1,27 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: emqx
+  namespace: emqx
+spec:
+  releaseName: emqx
+  chart:
+    spec:
+      chart: emqx
+      sourceRef:
+        kind: HelmRepository
+        name: emqx
+        namespace: flux-system
+  interval: 5m
+  install:
+    remediation:
+      retries: 3
+  values:
+    emqxAclConfig: |
+      {allow, {user, "dashboard"}, subscribe, ["$SYS/#"]}. {allow, all, pubsub, ["$SYS/#", "#"]}. {allow, all, subscribe, ["$SYS/#", {eq, "#"}]}. {allow, all}.
+    emqxLoadedModules: |
+      {emqx_mod_acl_internal, true}. {emqx_mod_presence, true}. {emqx_mod_trace, false}. {emqx_mod_slow_subs, true}. {emqx_mod_delayed, true}. {emqx_mod_rewrite, false}. {emqx_mod_subscription, true}. {emqx_mod_topic_metrics, true}.
+    emqxLoadedPlugins: |
+      {emqx_management, true}. {emqx_recon, true}. {emqx_retainer, true}. {emqx_dashboard, true}. {emqx_telemetry, true}. {emqx_rule_engine, true}. {emqx_bridge_mqtt, true}.
+    service:
+      type: ClusterIP
