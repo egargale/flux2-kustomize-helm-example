@@ -1,0 +1,36 @@
+---
+apiVersion: apisix.apache.org/v2beta3
+kind: ApisixTls
+metadata:
+  name: grafana-tls
+  namespace: monitoring
+spec:
+  hosts:
+    - grafana.glegal.local
+  secret:
+    name: grafana-tls
+    namespace: monitoring
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: grafana-tls
+spec:
+  dnsNames:
+    - grafana.glegal.local
+  issuerRef:
+    name: global-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io
+  secretName: grafana-tls
+  usages:
+    - server auth
+    - client auth
+    - digital signature
+    - key encipherment
+  duration: 2h
+  renewBefore: 50m
+  subject:
+    organizations:
+      - GLEGAL

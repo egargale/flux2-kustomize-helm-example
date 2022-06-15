@@ -1,0 +1,5 @@
+namespace: emqx
+
+resources:
+  - ingress.yaml
+  - emqx_stream.yaml

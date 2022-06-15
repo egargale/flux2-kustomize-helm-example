@@ -1,0 +1,80 @@
+---
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: store
+  namespace: {{ template "ocis.namespace" $ }}
+  labels:
+    {{- include "ocis.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: store
+  replicas: 1 #TODO: https://github.com/owncloud/ocis-charts/issues/12
+  {{- if .Values.deploymentStrategy }}
+  strategy: {{ toYaml .Values.deploymentStrategy | nindent 4 }}
+  {{ end }}
+  template:
+    metadata:
+      labels:
+        app: store
+        {{- include "ocis.labels" . | nindent 8 }}
+    spec:
+      {{- if $.Values.store.persistence.enabled }}
+      initContainers:
+        - name: init-chown-data
+          image: busybox
+          securityContext:
+            runAsNonRoot: false
+            runAsUser: 0
+          command: ["chown", "-R", "1000:1000", "/var/lib/ocis"]
+          volumeMounts:
+          - name: store-data
+            mountPath: /var/lib/ocis
+      {{ end }}
+      containers:
+        - name: store
+          {{- if .Values.image.sha }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}@sha256:{{ .Values.image.sha }}"
+          {{- else }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["ocis"]
+          args: ["store", "server"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+          env:
+            - name: MICRO_REGISTRY
+              value: kubernetes
+
+            - name: STORE_LOG_COLOR
+              value: "{{ $.Values.logging.color }}"
+            - name: STORE_LOG_LEVEL
+              value: "{{ $.Values.logging.level }}"
+            - name: STORE_LOG_PRETTY
+              value: "{{ $.Values.logging.pretty }}"
+
+            - name: STORE_GRPC_ADDR
+              value: 0.0.0.0:9460
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+          ports:
+            - name: grpc
+              containerPort: 9460
+          volumeMounts:
+            - name: store-data
+              mountPath: /var/lib/ocis
+      volumes:
+      {{- if $.Values.store.persistence.enabled }}
+        - name: store-data
+          persistentVolumeClaim:
+            claimName: store-data
+      {{ else }}
+        - name: store-data
+          emptyDir: {}
+      {{ end }}

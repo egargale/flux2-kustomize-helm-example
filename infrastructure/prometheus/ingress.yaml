@@ -1,0 +1,53 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "grafana-dashboard-ingress"
+  namespace: monitoring
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: global-issuer
+spec:
+  ingressClassName: apisix
+  tls:
+    - hosts:
+        - grafana.glegal.local
+      secretName: grafana-dashboard-cert
+  rules:
+    - host: "grafana.glegal.local"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "monitoring-grafana"
+                port:
+                  number: 80
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "promethues-dashboard-ingress"
+  namespace: monitoring
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: global-issuer
+spec:
+  ingressClassName: apisix
+  tls:
+    - hosts:
+        - prometheus.glegal.local
+      secretName: prometheus-dashboard-cert
+  rules:
+    - host: "prometheus.glegal.local"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "monitoring-kube-prometheus-prometheus"
+                port:
+                  number: 9090

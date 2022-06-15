@@ -1,0 +1,1222 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudcore
+  labels:
+    k8s-app: kubeedge
+    kubeedge: cloudcore
+data:
+  cloudcore.yaml: |
+    apiVersion: cloudcore.config.kubeedge.io/v1alpha2
+    kind: CloudCore
+    kubeAPIConfig:
+      kubeConfig: ""
+      master: ""
+    modules:
+      cloudHub:
+        advertiseAddress:
+        - 135.181.101.71
+        nodeLimit: 1000
+        tlsCAFile: /etc/kubeedge/ca/rootCA.crt
+        tlsCertFile: /etc/kubeedge/certs/edge.crt
+        tlsPrivateKeyFile: /etc/kubeedge/certs/edge.key
+        unixsocket:
+          address: unix:///var/lib/kubeedge/kubeedge.sock
+          enable: true
+        websocket:
+          address: 0.0.0.0
+          enable: true
+          port: 10000
+        quic:
+          address: 0.0.0.0
+          enable: false
+          maxIncomingStreams: 10000
+          port: 10001
+        https:
+          address: 0.0.0.0
+          enable: true
+          port: 10002
+      cloudStream:
+        enable: true
+        streamPort: 10003
+        tunnelPort: 10004
+      dynamicController:
+        enable: false
+      router:
+        enable: false
+
+---
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    k8s-app: kubeedge
+    kubeedge: cloudcore
+  name: cloudcore
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: kubeedge
+      kubeedge: cloudcore
+  template:
+    metadata:
+      labels:
+        k8s-app: kubeedge
+        kubeedge: cloudcore
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      restartPolicy: Always
+      affinity: 
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/edge
+                operator: DoesNotExist
+      serviceAccount: cloudcore  
+      containers:
+      - name: cloudcore
+        image: kubeedge/cloudcore:v1.10.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 10000
+          name: cloudhub
+          protocol: TCP
+        - containerPort: 10001
+          name: cloudhub-quic
+          protocol: TCP
+        - containerPort: 10002
+          name: cloudhub-https
+          protocol: TCP
+        - containerPort: 10003
+          name: cloudstream
+          protocol: TCP
+        - containerPort: 10004
+          name: tunnelport
+          protocol: TCP
+        volumeMounts:
+        - name: conf
+          mountPath: /etc/kubeedge/config
+        - name: certs
+          mountPath: /etc/kubeedge
+        - name: sock
+          mountPath: /var/lib/kubeedge
+        - mountPath: /etc/localtime
+          name: host-time
+          readOnly: true
+        securityContext: 
+          privileged: true
+        resources: 
+          limits:
+            cpu: 200m
+            memory: 1Gi
+          requests:
+            cpu: 100m
+            memory: 512Mi 
+      volumes:
+      - name: conf
+        configMap:
+          name: cloudcore
+      - name: certs
+        secret:
+          secretName: cloudcore
+          items:
+          - key: stream.crt
+            path: certs/stream.crt
+          - key: stream.key
+            path: certs/stream.key
+          - key: streamCA.crt
+            path: ca/streamCA.crt
+      - name: sock
+        hostPath:
+          path: /var/lib/kubeedge
+          type: DirectoryOrCreate
+      - hostPath:
+          path: /etc/localtime
+          type: ""
+        name: host-time
+
+---
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cloudcore
+  labels:
+    k8s-app: kubeedge
+    kubeedge: cloudcore
+rules:
+- apiGroups: [""]
+  resources: ["nodes", "nodes/status", "serviceaccounts/token", "configmaps", "pods", "pods/status", "secrets", "endpoints", "services", "persistentvolumes", "persistentvolumeclaims"]
+  verbs: ["get", "list", "watch", "create", "update"]
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get", "create", "list", "watch"]
+- apiGroups: [""]
+  resources: ["nodes", "pods/status"]
+  verbs: ["patch"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["delete"]
+- apiGroups: ["coordination.k8s.io"]
+  resources: ["leases"]
+  verbs: ["get", "list", "watch", "create", "update"]
+- apiGroups: ["devices.kubeedge.io"]
+  resources: ["devices", "devicemodels", "devices/status", "devicemodels/status"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["reliablesyncs.kubeedge.io"]
+  resources: ["objectsyncs", "clusterobjectsyncs", "objectsyncs/status", "clusterobjectsyncs/status"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["rules.kubeedge.io"]
+  resources: ["rules", "ruleendpoints", "rules/status", "ruleendpoints/status"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["apiextensions.k8s.io"]
+  resources: ["customresourcedefinitions"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["networking.istio.io"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch"]
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    k8s-app: kubeedge
+    kubeedge: cloudcore
+  name: cloudcore
+
+--- 
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cloudcore
+  labels:
+    k8s-app: kubeedge
+    kubeedge: cloudcore
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cloudcore
+subjects:
+- kind: ServiceAccount
+  name: cloudcore
+  namespace: kubeedge
+
+---
+
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cloudcore
+  labels:
+    k8s-app: kubeedge
+    kubeedge: cloudcore
+  annotations:
+    "helm.sh/hook": "pre-install"
+    "helm.sh/hook-delete-policy": "before-hook-creation"
+data:
+  streamCA.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURHVENDQWdHZ0F3SUJBZ0lRVG1RSWlGcVVPK0V0dGJobGt3b2ZBVEFOQmdrcWhraUc5dzBCQVFzRkFEQVgKTVJVd0V3WURWUVFERXd4amJHOTFaR052Y21VdFkyRXdIaGNOTWpJd016STRNRGt5TURVMVdoY05Nak13TXpJNApNRGt5TURVMVdqQVhNUlV3RXdZRFZRUURFd3hqYkc5MVpHTnZjbVV0WTJFd2dnRWlNQTBHQ1NxR1NJYjNEUUVCCkFRVUFBNElCRHdBd2dnRUtBb0lCQVFDK0U1TmZvOEhVa1U0bnVxclhxbXhBOG1rTTRMVjgvNW5heEpVMTRYM2IKUUJRMXlHL3M4OFhMZk5TZTRJSEhqck1FdW9GMUlBVXh5VEVSTGw4RXhIWXRHQ3grd0pTaE9HVUVyQXFtTnpLKwpKdWxMWVlUOEdRN1hPbTVHdHVjT3pTYWlMTTFTVTk0dXNadWNYdktXeWFjQ0d6T1JhWGpGUmV6VUVzZ3FibC9jCjFuaVcyZ3BqcDBqVFh3SmpISnhYNUp5WEhJcjJ6SXdBSUo5bXBVN0VkZEhGTWJYT3htR0xrSDZTcDJsdlBBc1IKd1JKV2krTHY3T2hrcjEwYjhaOHZKZGRrSW95Wnc0NndlbzdiaHdPNWd2amcxREFBUi9za2JXa2tDM2JvZlVaZQpEME83azNYcmxiZ3RCUThqdTFEVi9CWkRqcmNOK0JCWEhiNzljb3hpWEMycEFnTUJBQUdqWVRCZk1BNEdBMVVkCkR3RUIvd1FFQXdJQ3BEQWRCZ05WSFNVRUZqQVVCZ2dyQmdFRkJRY0RBUVlJS3dZQkJRVUhBd0l3RHdZRFZSMFQKQVFIL0JBVXdBd0VCL3pBZEJnTlZIUTRFRmdRVXhJQXZURjYzeXFNeENBTVJnQUk0R3I0SmNHb3dEUVlKS29aSQpodmNOQVFFTEJRQURnZ0VCQUdvMEJMWDk5aG1OdUYwZWVZOXZWd3k1N3Jla01wNWpuYk5HemRRRGhRSGdScFNrCk1hcHBLdnphZHRxVVRMVWg2NTlvajNiSkZrV1JFNjF4SFNGUG5ONjcrN3ZqVnZ5WmQxaHVhK0pwZFFnZFdMZGEKWjc5QitDd3E4M0hSVndFeFVkZWgyTWhLZ3RJRnlZZ3V3OTBSNWJnUG1uSEhiSFJ1YUx2dDdIek1iamNXNnByZgo0MHBuOFMxenUybGNWMENWOFdMMVUrczZ2NTR1NzM5cHlsSzlIM2xENkprQ2ZTNXd3T3hzZmxKTzlYcHlFY2J3ClBpQmR5cGF2clkraHBjMTJySHlNSkcrUkZveFNjaDhqNHlNbVlHMGpGSHkrclNITkZMUElhVHpZOE5IM3JvRHcKOFNjdnZtMVpDc1pYM0ZEejkvb21jM294d0swY1BwSTBJeE5hQ0RVPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+  stream.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURUekNDQWplZ0F3SUJBZ0lSQVA3YnFzY25UZDd3R1lZMHJzSHNvdFl3RFFZSktvWklodmNOQVFFTEJRQXcKRnpFVk1CTUdBMVVFQXhNTVkyeHZkV1JqYjNKbExXTmhNQjRYRFRJeU1ETXlPREE1TWpBMU5Wb1hEVEl6TURNeQpPREE1TWpBMU5Wb3dGREVTTUJBR0ExVUVBeE1KWTJ4dmRXUmpiM0psTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGCkFBT0NBUThBTUlJQkNnS0NBUUVBdXRyOHQyREtMNjd3c0hEL2ZEcHNHYUV5VWRKUHV2QXNuNm8zWjU0OE95S0UKdTZtM1ZaenZaUzF4S09GcENXVTNrUlhyMkJkVUJJYlZKcFlraDNkdnBlK1hrNGNPaThRQWN3YzBSR2g0Z25ZagpiamhYWkxFb2lobkNaZDJsNUZQNEJlYzBkd1dNc1RaMHlpOUVuKzZjbEJuMHVxMm8xSVRYVFVmUVd5OVQ1SkZ3ClNKQTJMeDYxREwwb1d4U0k1b0JsdUxWVTJyOWV6eVEvajhtZC9CdVQyb0NaYmlkR3oxUGNTNkIvRlBleU5zWE8KZEhMMktyZ2RDOE05bzlCc1BlM3JJWEdJVGRrRFB3RDFrSkFtVm1XRXVZYS9mVmlGTFd4aVNSRmdaVjhFOTdEUQpYUDRiNmpDT1VZNFhIcWJiT0Y2Skt0UzJDWURaWmVOTkRPbUNUQkFuL1FJREFRQUJvNEdZTUlHVk1BNEdBMVVkCkR3RUIvd1FFQXdJRm9EQWRCZ05WSFNVRUZqQVVCZ2dyQmdFRkJRY0RBUVlJS3dZQkJRVUhBd0l3REFZRFZSMFQKQVFIL0JBSXdBREFmQmdOVkhTTUVHREFXZ0JURWdDOU1YcmZLb3pFSUF4R0FBamdhdmdsd2FqQTFCZ05WSFJFRQpMakFzZ2hKamJHOTFaR052Y21VdWEzVmlaV1ZrWjJXQ0ZtTnNiM1ZrWTI5eVpTNXJkV0psWldSblpTNXpkbU13CkRRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFIekJ1ay92ZXNDZ2UyMUJkNHJsN3lHSlgxeDYwL293ZUdtZ2xCTWkKdG5FYWF1VVpXZ2c4NVkzci9nSFp4UjZzOFB2Rk41bU95Y0t3VE96OTYrR2UzRWtFakgyNXZSclczZmF3ZlM3bwowTWlvVGNTb0dsVVdrdVU4a1YxSGNwNDlBbXEwNEFqZ2pVeUd0QXA5eXpoRW93a2dVdENPWkh0NlgyMHQwYmVvClVlYkNKQjM4V2Z6MVN1VCtaQzBNZzhENDZvZW5rcWtGT0VzNUgxcmpwclBBbHNKdzlWaXR4aWV3M3ExWW5RUm4KTk8xYkFsMW45UUphaHZWaGJ6dWtOeEk1dUxTUGtoT3Z4OC9rUlJWZFUvZjhOVkprN21VRW03RUc1ci9RVFJldgpGK3lueXRVQ3ZleHlTM3RVaGU3RWFDZzdVbms0bGpDY3FBemlGNjVucGgvaDlpRT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+  stream.key: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcGdJQkFBS0NBUUVBdXRyOHQyREtMNjd3c0hEL2ZEcHNHYUV5VWRKUHV2QXNuNm8zWjU0OE95S0V1Nm0zClZaenZaUzF4S09GcENXVTNrUlhyMkJkVUJJYlZKcFlraDNkdnBlK1hrNGNPaThRQWN3YzBSR2g0Z25ZamJqaFgKWkxFb2lobkNaZDJsNUZQNEJlYzBkd1dNc1RaMHlpOUVuKzZjbEJuMHVxMm8xSVRYVFVmUVd5OVQ1SkZ3U0pBMgpMeDYxREwwb1d4U0k1b0JsdUxWVTJyOWV6eVEvajhtZC9CdVQyb0NaYmlkR3oxUGNTNkIvRlBleU5zWE9kSEwyCktyZ2RDOE05bzlCc1BlM3JJWEdJVGRrRFB3RDFrSkFtVm1XRXVZYS9mVmlGTFd4aVNSRmdaVjhFOTdEUVhQNGIKNmpDT1VZNFhIcWJiT0Y2Skt0UzJDWURaWmVOTkRPbUNUQkFuL1FJREFRQUJBb0lCQVFDQVE3QjBSS21sbjhXeQpxRzZJSFNaMVZYVFFPN2psVHRhaTUxcE84NHpPM3Z3VVFnVUtiTWJjUWh4S2ZxajJmUmR1cllpT2RqMERPbmI0Cm5Ob0liNUVoYTkwMXRPRGtTakF3eGNJNEx5cUNDNHg0clk0NEhYQUJsSHNnSjgwbmRnaHNMUENUdnloN3dURGMKVlNRYlVOVUV5T2g0ZUpySy8wRTMyRk1MTk9xMm0zemZIbnVCOGtyMnVMSEhvbW1FRkRCZklHSWdNall4WnFCcQpHeDlKU3hvZkpBOW1tTGxnR2FuNzdoK1BjRUpveTArZnRrSVFidmkvdjZtdFZJR2VnRW5mZ3ZnRWZLUkNwVy9pCkxVYzQ5RlNkZHFnMDRjL0dwNUtwamxpeVdQUXhZWlFaZ0RKY21JY3FkeTVBK3VTczdWTjZicGk5ZGE5b2tFcDgKQ21mQXlSbzFBb0dCQU1HS29qcnU5cmtxRHpYUGUvdzFTVjZCTmh4U3RScU41UWNLcVVleEZrT1R2b2NFRnlFcQplZnZoRnRvV1pGaUZMTTdqZ0RoQTZvZWQxT20vREJ1Nk1nakV1UEpuNWtCMno3czJxaXFiWmRiMHQxckRBR1ZLCm1USjVkWk9yalRsdVJ6TnN6Q0xYbHFHS0F4Zk0razVwUFl0M2J2TlJDUHZsQ2RaM3kwM0t0enVyQW9HQkFQY24KKzJoVWVteFdCR08wa29SS1RETTV2d0Vyck5aVlF2ZFpEa2RldjJSQ21sdzlVc24rUkNXWHMrd2c2MEl5ZldRaQpoaXJ5RnBrUHd2M3J6Sjk3YU1FNk5BS2Jpbkw3WmI0ck9ybDJmNmZYSmkvMlUvcGs1eUZad0gybTVvWEpOMUswCmJubTRQMlBRWnJGK2tOaEVQdWRpUmRqZUtPNi8rZXYzQkw4d0tzTDNBb0dCQUtHRWRkRWkvaW9YTEt4bXBIMGQKWjBhRUpNbE1TTEdKZTNuOTdyblMwdGJBcFA5K2JXTVRWTXZjMURwYTk1RmNTc0c1NEphUnJtaFJVbzlrRGRIUgorTkdTZ3hwaGxTbDFQZlZxTUdid1d2UWlOQ1o5bUlYdjFKdm4relNxdFdnWlhUaFFjcWdkTFN0UXh6WUVyVnZrCnZpVDNIbFBXNjkxMERscTZqS00yS3VhVEFvR0JBTzBxaUsxTW8wMWlIVVF2K29qSFl1ZWsrZ3g5aEpVSHJBTCsKaWgwaVpqWW5VMGcvOERtMHJHQUdlcmlUdml6L2xpT0luWWFJVi9iNGtQeG9VU3FZbWFVUjNPYkRxczg3UGg2RwpEUXY3RWZSVkdHZmQwQ2Z1dTN2ZFRFRkc3dDVpZjV2MVdDMmxCKzhZQS9NK3FHOWV6WjNyUjJzYmc5dldqRlJKCjdWd3BORjl4QW9HQkFJM3ZQOFFTanRBTldYS0ZOMkkrL2Q2WUMyb2V3SXVFejF2TG5RNVRJQU9weHRRQVhTR2sKd1RXVEdZVDVGK0p2a3FDZnZVWGs4VVV6VE1ldHVlUDRVUVg4bnd0d0orK3JmSEpaYWZzR09wUjdZZjh1RUtZUgp2WkhBcmtHQyt4RmZBUm45NXRmSFVmSTFid0FDMlMwUG9NK3hhR2dFY0RmUHFEMXdvbTZnQVZqNwotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    k8s-app: kubeedge
+    kubeedge: cloudcore
+  name: cloudcore
+spec:
+  type: ClusterIP
+  ports:
+  - port: 10000
+    targetPort: 10000
+    name: cloudhub
+  - port: 10001
+    targetPort: 10001
+    name: cloudhub-quic
+  - port: 10002
+    targetPort: 10002
+    name: cloudhub-https
+  - port: 10003
+    targetPort: 10003
+    name: cloudstream
+  - port: 10004
+    targetPort: 10004
+    name: tunnelport
+  selector:
+    k8s-app: kubeedge
+    kubeedge: cloudcore
+
+---
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
+  name: clusterobjectsyncs.reliablesyncs.kubeedge.io
+spec:
+  group: reliablesyncs.kubeedge.io
+  names:
+    kind: ClusterObjectSync
+    listKind: ClusterObjectSyncList
+    plural: clusterobjectsyncs
+    singular: clusterobjectsync
+  scope: Cluster
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: ClusterObjectSync stores the state of the cluster level, nonNamespaced
+          object that was successfully persisted to the edge node. ClusterObjectSync
+          name is a concatenation of the node name which receiving the object and
+          the object UUID.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ObjectSyncSpec stores the details of objects that persist
+              to the edge.
+            properties:
+              objectAPIVersion:
+                description: ObjectAPIVersion is the APIVersion of the object that
+                  was successfully persist to the edge node.
+                type: string
+              objectKind:
+                description: ObjectType is the kind of the object that was successfully
+                  persist to the edge node.
+                type: string
+              objectName:
+                description: ObjectName is the name of the object that was successfully
+                  persist to the edge node.
+                type: string
+            type: object
+          status:
+            description: ObjectSyncSpec stores the resourceversion of objects that
+              persist to the edge.
+            properties:
+              objectResourceVersion:
+                description: ObjectResourceVersion is the resourceversion of the object
+                  that was successfully persist to the edge node.
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+
+---
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
+  name: devices.devices.kubeedge.io
+spec:
+  group: devices.kubeedge.io
+  names:
+    kind: Device
+    listKind: DeviceList
+    plural: devices
+    singular: device
+  scope: Namespaced
+  versions:
+  - name: v1alpha2
+    schema:
+      openAPIV3Schema:
+        description: Device is the Schema for the devices API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: DeviceSpec represents a single device instance. It is an
+              instantation of a device model.
+            properties:
+              data:
+                description: Data section describe a list of time-series properties
+                  which should be processed on edge node.
+                properties:
+                  dataProperties:
+                    description: 'Required: A list of data properties, which are not
+                      required to be processed by edgecore'
+                    items:
+                      description: DataProperty represents the device property for
+                        external use.
+                      properties:
+                        metadata:
+                          additionalProperties:
+                            type: string
+                          description: Additional metadata like timestamp when the
+                            value was reported etc.
+                          type: object
+                        propertyName:
+                          description: 'Required: The property name for which should
+                            be processed by external apps. This property should be
+                            present in the device model.'
+                          type: string
+                      type: object
+                    type: array
+                  dataTopic:
+                    description: Topic used by mapper, all data collected from dataProperties
+                      should be published to this topic, the default value is $ke/events/device/+/data/update
+                    type: string
+                type: object
+              deviceModelRef:
+                description: 'Required: DeviceModelRef is reference to the device
+                  model used as a template to create the device instance.'
+                properties:
+                  name:
+                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      TODO: Add other useful fields. apiVersion, kind, uid?'
+                    type: string
+                type: object
+              nodeSelector:
+                description: NodeSelector indicates the binding preferences between
+                  devices and nodes. Refer to k8s.io/kubernetes/pkg/apis/core NodeSelector
+                  for more details
+                properties:
+                  nodeSelectorTerms:
+                    description: Required. A list of node selector terms. The terms
+                      are ORed.
+                    items:
+                      description: A null or empty node selector term matches no objects.
+                        The requirements of them are ANDed. The TopologySelectorTerm
+                        type implements a subset of the NodeSelectorTerm.
+                      properties:
+                        matchExpressions:
+                          description: A list of node selector requirements by node's
+                            labels.
+                          items:
+                            description: A node selector requirement is a selector
+                              that contains values, a key, and an operator that relates
+                              the key and values.
+                            properties:
+                              key:
+                                description: The label key that the selector applies
+                                  to.
+                                type: string
+                              operator:
+                                description: Represents a key's relationship to a
+                                  set of values. Valid operators are In, NotIn, Exists,
+                                  DoesNotExist. Gt, and Lt.
+                                type: string
+                              values:
+                                description: An array of string values. If the operator
+                                  is In or NotIn, the values array must be non-empty.
+                                  If the operator is Exists or DoesNotExist, the values
+                                  array must be empty. If the operator is Gt or Lt,
+                                  the values array must have a single element, which
+                                  will be interpreted as an integer. This array is
+                                  replaced during a strategic merge patch.
+                                items:
+                                  type: string
+                                type: array
+                            required:
+                            - key
+                            - operator
+                            type: object
+                          type: array
+                        matchFields:
+                          description: A list of node selector requirements by node's
+                            fields.
+                          items:
+                            description: A node selector requirement is a selector
+                              that contains values, a key, and an operator that relates
+                              the key and values.
+                            properties:
+                              key:
+                                description: The label key that the selector applies
+                                  to.
+                                type: string
+                              operator:
+                                description: Represents a key's relationship to a
+                                  set of values. Valid operators are In, NotIn, Exists,
+                                  DoesNotExist. Gt, and Lt.
+                                type: string
+                              values:
+                                description: An array of string values. If the operator
+                                  is In or NotIn, the values array must be non-empty.
+                                  If the operator is Exists or DoesNotExist, the values
+                                  array must be empty. If the operator is Gt or Lt,
+                                  the values array must have a single element, which
+                                  will be interpreted as an integer. This array is
+                                  replaced during a strategic merge patch.
+                                items:
+                                  type: string
+                                type: array
+                            required:
+                            - key
+                            - operator
+                            type: object
+                          type: array
+                      type: object
+                    type: array
+                required:
+                - nodeSelectorTerms
+                type: object
+              propertyVisitors:
+                description: List of property visitors which describe how to access
+                  the device properties. PropertyVisitors must unique by propertyVisitor.propertyName.
+                items:
+                  description: DevicePropertyVisitor describes the specifics of accessing
+                    a particular device property. Visitors are intended to be consumed
+                    by device mappers which connect to devices and collect data /
+                    perform actions on the device.
+                  properties:
+                    bluetooth:
+                      description: Bluetooth represents a set of additional visitor
+                        config fields of bluetooth protocol.
+                      properties:
+                        characteristicUUID:
+                          description: 'Required: Unique ID of the corresponding operation'
+                          type: string
+                        dataConverter:
+                          description: Responsible for converting the data being read
+                            from the bluetooth device into a form that is understandable
+                            by the platform
+                          properties:
+                            endIndex:
+                              description: 'Required: Specifies the end index of incoming
+                                byte stream to be considered to convert the data the
+                                value specified should be inclusive for example if
+                                3 is specified it includes the third index'
+                              type: integer
+                            orderOfOperations:
+                              description: Specifies in what order the operations(which
+                                are required to be performed to convert incoming data
+                                into understandable form) are performed
+                              items:
+                                description: Specify the operation that should be
+                                  performed to convert incoming data into understandable
+                                  form
+                                properties:
+                                  operationType:
+                                    description: 'Required: Specifies the operation
+                                      to be performed to convert incoming data'
+                                    type: string
+                                  operationValue:
+                                    description: 'Required: Specifies with what value
+                                      the operation is to be performed'
+                                    type: number
+                                type: object
+                              type: array
+                            shiftLeft:
+                              description: Refers to the number of bits to shift left,
+                                if left-shift operation is necessary for conversion
+                              type: integer
+                            shiftRight:
+                              description: Refers to the number of bits to shift right,
+                                if right-shift operation is necessary for conversion
+                              type: integer
+                            startIndex:
+                              description: 'Required: Specifies the start index of
+                                the incoming byte stream to be considered to convert
+                                the data. For example: start-index:2, end-index:3
+                                concatenates the value present at second and third
+                                index of the incoming byte stream. If we want to reverse
+                                the order we can give it as start-index:3, end-index:2'
+                              type: integer
+                          type: object
+                        dataWrite:
+                          additionalProperties:
+                            format: byte
+                            type: string
+                          description: 'Responsible for converting the data coming
+                            from the platform into a form that is understood by the
+                            bluetooth device For example: "ON":[1], "OFF":[0]'
+                          type: object
+                      type: object
+                    collectCycle:
+                      description: Define how frequent mapper will collect from device.
+                      format: int64
+                      type: integer
+                    customizedProtocol:
+                      description: CustomizedProtocol represents a set of visitor
+                        config fields of bluetooth protocol.
+                      properties:
+                        configData:
+                          description: 'Required: The configData of customized protocol'
+                          type: object
+                          x-kubernetes-preserve-unknown-fields: true
+                        protocolName:
+                          description: 'Required: name of customized protocol'
+                          type: string
+                      type: object
+                    customizedValues:
+                      description: Customized values for visitor of provided protocols
+                      type: object
+                      x-kubernetes-preserve-unknown-fields: true
+                    modbus:
+                      description: Modbus represents a set of additional visitor config
+                        fields of modbus protocol.
+                      properties:
+                        isRegisterSwap:
+                          description: Indicates whether the high and low register
+                            swapped. Defaults to false.
+                          type: boolean
+                        isSwap:
+                          description: Indicates whether the high and low byte swapped.
+                            Defaults to false.
+                          type: boolean
+                        limit:
+                          description: 'Required: Limit number of registers to read/write.'
+                          format: int64
+                          type: integer
+                        offset:
+                          description: 'Required: Offset indicates the starting register
+                            number to read/write data.'
+                          format: int64
+                          type: integer
+                        register:
+                          description: 'Required: Type of register'
+                          enum:
+                          - CoilRegister
+                          - DiscreteInputRegister
+                          - InputRegister
+                          - HoldingRegister
+                          type: string
+                        scale:
+                          description: The scale to convert raw property data into
+                            final units. Defaults to 1.0
+                          type: number
+                      type: object
+                    opcua:
+                      description: Opcua represents a set of additional visitor config
+                        fields of opc-ua protocol.
+                      properties:
+                        browseName:
+                          description: The name of opc-ua node
+                          type: string
+                        nodeID:
+                          description: 'Required: The ID of opc-ua node, e.g. "ns=1,i=1005"'
+                          type: string
+                      type: object
+                    propertyName:
+                      description: 'Required: The device property name to be accessed.
+                        This should refer to one of the device properties defined
+                        in the device model.'
+                      type: string
+                    reportCycle:
+                      description: Define how frequent mapper will report the value.
+                      format: int64
+                      type: integer
+                  type: object
+                type: array
+              protocol:
+                description: 'Required: The protocol configuration used to connect
+                  to the device.'
+                properties:
+                  bluetooth:
+                    description: Protocol configuration for bluetooth
+                    properties:
+                      macAddress:
+                        description: Unique identifier assigned to the device.
+                        type: string
+                    type: object
+                  common:
+                    description: Configuration for protocol common part
+                    properties:
+                      collectRetryTimes:
+                        description: Define retry times of mapper will collect from
+                          device.
+                        format: int64
+                        type: integer
+                      collectTimeout:
+                        description: Define timeout of mapper collect from device.
+                        format: int64
+                        type: integer
+                      collectType:
+                        description: Define collect type, sync or async.
+                        enum:
+                        - sync
+                        - async
+                        type: string
+                      com:
+                        properties:
+                          baudRate:
+                            description: Required. BaudRate 115200|57600|38400|19200|9600|4800|2400|1800|1200|600|300|200|150|134|110|75|50
+                            enum:
+                            - 115200
+                            - 57600
+                            - 38400
+                            - 19200
+                            - 9600
+                            - 4800
+                            - 2400
+                            - 1800
+                            - 1200
+                            - 600
+                            - 300
+                            - 200
+                            - 150
+                            - 134
+                            - 110
+                            - 75
+                            - 50
+                            format: int64
+                            type: integer
+                          dataBits:
+                            description: Required. Valid values are 8, 7, 6, 5.
+                            enum:
+                            - 8
+                            - 7
+                            - 6
+                            - 5
+                            format: int64
+                            type: integer
+                          parity:
+                            description: Required. Valid options are "none", "even",
+                              "odd". Defaults to "none".
+                            enum:
+                            - none
+                            - even
+                            - odd
+                            type: string
+                          serialPort:
+                            description: Required.
+                            type: string
+                          stopBits:
+                            description: Required. Bit that stops 1|2
+                            enum:
+                            - 1
+                            - 2
+                            format: int64
+                            type: integer
+                        type: object
+                      commType:
+                        description: Communication type, like tcp client, tcp server
+                          or COM
+                        type: string
+                      customizedValues:
+                        description: Customized values for provided protocol
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      reconnRetryTimes:
+                        description: Reconnecting retry times
+                        format: int64
+                        type: integer
+                      reconnTimeout:
+                        description: Reconnection timeout
+                        format: int64
+                        type: integer
+                      tcp:
+                        properties:
+                          ip:
+                            description: Required.
+                            type: string
+                          port:
+                            description: Required.
+                            format: int64
+                            type: integer
+                        type: object
+                    type: object
+                  customizedProtocol:
+                    description: Configuration for customized protocol
+                    properties:
+                      configData:
+                        description: Any config data
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      protocolName:
+                        description: Unique protocol name Required.
+                        type: string
+                    type: object
+                  modbus:
+                    description: Protocol configuration for modbus
+                    properties:
+                      slaveID:
+                        description: Required. 0-255
+                        format: int64
+                        type: integer
+                    type: object
+                  opcua:
+                    description: Protocol configuration for opc-ua
+                    properties:
+                      certificate:
+                        description: Certificate for access opc server.
+                        type: string
+                      password:
+                        description: Password for access opc server.
+                        type: string
+                      privateKey:
+                        description: PrivateKey for access opc server.
+                        type: string
+                      securityMode:
+                        description: Defaults to "none".
+                        type: string
+                      securityPolicy:
+                        description: Defaults to "none".
+                        type: string
+                      timeout:
+                        description: Timeout seconds for the opc server connection.???
+                        format: int64
+                        type: integer
+                      url:
+                        description: 'Required: The URL for opc server endpoint.'
+                        type: string
+                      userName:
+                        description: Username for access opc server.
+                        type: string
+                    type: object
+                type: object
+            type: object
+          status:
+            description: DeviceStatus reports the device state and the desired/reported
+              values of twin attributes.
+            properties:
+              twins:
+                description: 'A list of device twins containing desired/reported desired/reported
+                  values of twin properties.. Optional: A passive device won''t have
+                  twin properties and this list could be empty.'
+                items:
+                  description: Twin provides a logical representation of control properties
+                    (writable properties in the device model). The properties can
+                    have a Desired state and a Reported state. The cloud configures
+                    the `Desired`state of a device property and this configuration
+                    update is pushed to the edge node. The mapper sends a command
+                    to the device to change this property value as per the desired
+                    state . It receives the `Reported` state of the property once
+                    the previous operation is complete and sends the reported state
+                    to the cloud. Offline device interaction in the edge is possible
+                    via twin properties for control/command operations.
+                  properties:
+                    desired:
+                      description: 'Required: the desired property value.'
+                      properties:
+                        metadata:
+                          additionalProperties:
+                            type: string
+                          description: Additional metadata like timestamp when the
+                            value was reported etc.
+                          type: object
+                        value:
+                          description: 'Required: The value for this property.'
+                          type: string
+                      required:
+                      - value
+                      type: object
+                    propertyName:
+                      description: 'Required: The property name for which the desired/reported
+                        values are specified. This property should be present in the
+                        device model.'
+                      type: string
+                    reported:
+                      description: 'Required: the reported property value.'
+                      properties:
+                        metadata:
+                          additionalProperties:
+                            type: string
+                          description: Additional metadata like timestamp when the
+                            value was reported etc.
+                          type: object
+                        value:
+                          description: 'Required: The value for this property.'
+                          type: string
+                      required:
+                      - value
+                      type: object
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+
+---
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
+  name: devicemodels.devices.kubeedge.io
+spec:
+  group: devices.kubeedge.io
+  names:
+    kind: DeviceModel
+    listKind: DeviceModelList
+    plural: devicemodels
+    singular: devicemodel
+  scope: Namespaced
+  versions:
+  - name: v1alpha2
+    schema:
+      openAPIV3Schema:
+        description: DeviceModel is the Schema for the device model API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: DeviceModelSpec defines the model / template for a device.It
+              is a blueprint which describes the device capabilities and access mechanism
+              via property visitors.
+            properties:
+              properties:
+                description: 'Required: List of device properties.'
+                items:
+                  description: DeviceProperty describes an individual device property
+                    / attribute like temperature / humidity etc.
+                  properties:
+                    description:
+                      description: The device property description.
+                      type: string
+                    name:
+                      description: 'Required: The device property name.'
+                      type: string
+                    type:
+                      description: 'Required: PropertyType represents the type and
+                        data validation of the property.'
+                      properties:
+                        boolean:
+                          properties:
+                            accessMode:
+                              description: 'Required: Access mode of property, ReadWrite
+                                or ReadOnly.'
+                              enum:
+                              - ReadWrite
+                              - ReadOnly
+                              type: string
+                            defaultValue:
+                              type: boolean
+                          type: object
+                        bytes:
+                          properties:
+                            accessMode:
+                              description: 'Required: Access mode of property, ReadWrite
+                                or ReadOnly.'
+                              enum:
+                              - ReadWrite
+                              - ReadOnly
+                              type: string
+                          type: object
+                        double:
+                          properties:
+                            accessMode:
+                              description: 'Required: Access mode of property, ReadWrite
+                                or ReadOnly.'
+                              enum:
+                              - ReadWrite
+                              - ReadOnly
+                              type: string
+                            defaultValue:
+                              type: number
+                            maximum:
+                              type: number
+                            minimum:
+                              type: number
+                            unit:
+                              description: The unit of the property
+                              type: string
+                          type: object
+                        float:
+                          properties:
+                            accessMode:
+                              description: 'Required: Access mode of property, ReadWrite
+                                or ReadOnly.'
+                              enum:
+                              - ReadWrite
+                              - ReadOnly
+                              type: string
+                            defaultValue:
+                              type: number
+                            maximum:
+                              type: number
+                            minimum:
+                              type: number
+                            unit:
+                              description: The unit of the property
+                              type: string
+                          type: object
+                        int:
+                          properties:
+                            accessMode:
+                              description: 'Required: Access mode of property, ReadWrite
+                                or ReadOnly.'
+                              enum:
+                              - ReadWrite
+                              - ReadOnly
+                              type: string
+                            defaultValue:
+                              format: int64
+                              type: integer
+                            maximum:
+                              format: int64
+                              type: integer
+                            minimum:
+                              format: int64
+                              type: integer
+                            unit:
+                              description: The unit of the property
+                              type: string
+                          type: object
+                        string:
+                          properties:
+                            accessMode:
+                              description: 'Required: Access mode of property, ReadWrite
+                                or ReadOnly.'
+                              enum:
+                              - ReadWrite
+                              - ReadOnly
+                              type: string
+                            defaultValue:
+                              type: string
+                          type: object
+                      type: object
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+
+---
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
+  name: objectsyncs.reliablesyncs.kubeedge.io
+spec:
+  group: reliablesyncs.kubeedge.io
+  names:
+    kind: ObjectSync
+    listKind: ObjectSyncList
+    plural: objectsyncs
+    singular: objectsync
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: ObjectSync stores the state of the namespaced object that was
+          successfully persisted to the edge node. ObjectSync name is a concatenation
+          of the node name which receiving the object and the object UUID.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ObjectSyncSpec stores the details of objects that persist
+              to the edge.
+            properties:
+              objectAPIVersion:
+                description: ObjectAPIVersion is the APIVersion of the object that
+                  was successfully persist to the edge node.
+                type: string
+              objectKind:
+                description: ObjectType is the kind of the object that was successfully
+                  persist to the edge node.
+                type: string
+              objectName:
+                description: ObjectName is the name of the object that was successfully
+                  persist to the edge node.
+                type: string
+            type: object
+          status:
+            description: ObjectSyncSpec stores the resourceversion of objects that
+              persist to the edge.
+            properties:
+              objectResourceVersion:
+                description: ObjectResourceVersion is the resourceversion of the object
+                  that was successfully persist to the edge node.
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: rules.rules.kubeedge.io
+spec:
+  group: rules.kubeedge.io
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                source:
+                  description: |
+                    source is a string value representing where the messages come from. Its
+                    value is the same with ruleendpoint name. For example, my-rest or my-eventbus.
+                  type: string
+                sourceResource:
+                  description: |
+                    sourceResource is a map representing the resource info of source. For rest
+                    rule-endpoint type its value is {"path":"/test"}. For eventbus ruleendpoint type its
+                    value is {"topic":"<user define string>","node_name":"edge-node"}
+                  type: object
+                  additionalProperties:
+                    type: string
+                target:
+                  description: |
+                    target is a string value representing where the messages go to. its value is
+                    the same with ruleendpoint name. For example, my-eventbus or my-rest or my-servicebus.
+                  type: string
+                targetResource:
+                  description: |
+                    targetResource is a map representing the resource info of target. For rest
+                    rule-endpoint type its value is {"resource":"http://a.com"}. For eventbus ruleendpoint
+                    type its value is {"topic":"/test"}. For servicebus rule-endpoint type its value is
+                    {"path":"/request_path"}.
+                  type: object
+                  additionalProperties:
+                    type: string
+              required:
+                - source
+                - sourceResource
+                - target
+                - targetResource
+            status:
+              type: object
+              properties:
+                successMessages:
+                  type: integer
+                failMessages:
+                  type: integer
+                errors:
+                  items:
+                    type: string
+                  type: array
+  scope: Namespaced
+  names:
+    plural: rules
+    singular: rule
+    kind: Rule
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: ruleendpoints.rules.kubeedge.io
+spec:
+  group: rules.kubeedge.io
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                ruleEndpointType:
+                  description: |
+                    ruleEndpointType is a string value representing rule-endpoint type. its value is
+                    one of rest/eventbus/servicebus.
+                  type: string
+                  enum:
+                    - rest
+                    - eventbus
+                    - servicebus
+                properties:
+                  description: |
+                    properties is not required except for servicebus rule-endpoint type. It is a map
+                    value representing rule-endpoint properties. When ruleEndpointType is servicebus,
+                    its value is {"service_port":"8080"}.
+                  type: object
+                  additionalProperties:
+                    type: string
+              required:
+                - ruleEndpointType
+  scope: Namespaced
+  names:
+    plural: ruleendpoints
+    singular: ruleendpoint
+    kind: RuleEndpoint
+    shortNames:
+      - re
+
+---

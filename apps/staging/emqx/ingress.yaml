@@ -1,0 +1,26 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "emqx-dashboard-ingress"
+  namespace: emqx
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: global-issuer
+spec:
+  ingressClassName: apisix
+  tls:
+    - hosts:
+        - emqx.glegal.local
+      secretName: emqx-dashboard-cert
+  rules:
+    - host: "emqx.glegal.local"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "emqx"
+                port:
+                  number: 18083

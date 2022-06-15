@@ -1,0 +1,38 @@
+apiVersion: apps.emqx.io/v1beta2
+kind: EmqxBroker
+metadata:
+  name: emqx
+spec:
+  image: emqx/emqx:4.4.0
+  replicas: 3
+  labels:
+    cluster: emqx
+  # storage:
+  #   storageClassName: emqx
+  #   resources:
+  #     requests:
+  #       storage: 20Mi
+  #   accessModes:
+  #     - ReadWriteOnce
+  # env:
+  #   - name: EMQX_DASHBOARD__DEFAULT_USER__LOGIN
+  #     value: admin
+  #   - name: EMQX_DASHBOARD__DEFAULT_USER__PASSWORD
+  #     value: ?
+  emqxTemplate:
+    listener:
+      type: NodePort
+      ports:
+        mqtt: 1883
+        mqtts: 8883
+        ws: 8083
+        wss: 8084
+        dashboard: 18083
+        api: 8081
+      nodePorts:
+        mqtt: 30038
+        mqtts: 30039
+        ws: 30040
+        wss: 30041
+        dashboard: 30042
+        api: 30043
