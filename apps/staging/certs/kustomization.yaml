@@ -3,4 +3,3 @@ kind: Kustomization
 namespace: cert-manager
 resources:
   - global-issuer.yaml
-  - ingress.yaml
