@@ -4,6 +4,7 @@ metadata:
   name: cert-manager
 spec:
   releaseName: cert-manager
+  targetNamespace: cert-manager
   chart:
     spec:
       chart: cert-manager
@@ -16,5 +17,5 @@ spec:
   install:
     remediation:
       retries: 3
-  values:
-    installCDRs: true
+  # values:
+  #   installCDRs: true
