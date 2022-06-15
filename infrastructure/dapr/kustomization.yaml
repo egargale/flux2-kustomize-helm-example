@@ -4,7 +4,6 @@ namespace: dapr
 resources:
   - namespace.yaml
   - release.yaml
-  # - components.yaml
   - ingress.yaml
 # configMapGenerator:
 #   - name: redis-values
