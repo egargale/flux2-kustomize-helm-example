@@ -4,6 +4,6 @@ resources:
   - sources
   # - nginx
   - cert-manager
-  # - dapr
+  - dapr
   - apisix
   - redis
