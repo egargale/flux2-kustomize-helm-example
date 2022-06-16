@@ -19,4 +19,4 @@ spec:
     remediation:
       retries: 3
   values:
-    installCDRs: false
+    installCDRs: true
