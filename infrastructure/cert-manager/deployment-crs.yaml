@@ -7,9 +7,9 @@ metadata:
 spec:
   dependsOn:
     - name: cert-manager-crds
-  interval: 10m
-  path: ./crs
-  prune: true
+  interval: 10m0s
   sourceRef:
     kind: GitRepository
     name: flux-system
+  path: ./crs
+  prune: true
