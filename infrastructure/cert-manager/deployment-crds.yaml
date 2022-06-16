@@ -6,7 +6,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m
-  path: ./releases/download/v1.8.0/cert-manager.crds.yaml
+  path: ./deploy/crds
   prune: true
   sourceRef:
     kind: GitRepository
