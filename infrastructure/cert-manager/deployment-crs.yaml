@@ -11,5 +11,5 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./crs
+  path: ./infrastructure/certs/crs
   prune: true
