@@ -7,5 +7,4 @@ spec:
   interval: 10m
   ref:
     branch: main
-  url: https://github.com/cert-manager/cert-manager
-
+  url: http://github.com/cert-manager/cert-manager
