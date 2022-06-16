@@ -8,7 +8,7 @@ spec:
   dependsOn:
     - name: cert-manager-crds
   interval: 10m
-  path: ./infrastructure/certs/crs
+  path: ./crs
   prune: true
   sourceRef:
     kind: GitRepository
