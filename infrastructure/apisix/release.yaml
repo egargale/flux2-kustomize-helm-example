@@ -29,7 +29,7 @@ spec:
     gateway:
       type: LoadBalancer
       annotations:
-        load-balancer.hetzner.cloud/name: "lb1"
+        load-balancer.hetzner.cloud/name: "lb11"
       tls:
         enabled: true
       stream: # L4 proxy (TCP/UDP)
