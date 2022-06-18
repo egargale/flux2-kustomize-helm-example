@@ -4,6 +4,6 @@ resources:
   - sources
   - eso
   - cert-manager
-  - dapr
-  - apisix
-  - redis
+ # - dapr
+ # - apisix
+ # - redis
