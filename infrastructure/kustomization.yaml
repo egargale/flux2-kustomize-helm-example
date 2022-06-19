@@ -2,8 +2,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - sources
-  # - eso
+  - eso
   - cert-manager
   - dapr
- # - apisix
- # - redis
+  - apisix
+  - redis
