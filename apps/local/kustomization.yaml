@@ -5,6 +5,5 @@ bases:
   - ./certs
   - ./apisix
   - ./dapr
-  - ./podinfo
   - ./quote
   - ./emqx
