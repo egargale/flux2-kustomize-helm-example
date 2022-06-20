@@ -1,0 +1,43 @@
+---
+apiVersion: apisix.apache.org/v2beta3
+kind: ApisixRoute
+metadata:
+  name: emqx-stream-mqtt
+  namespace: emqx
+spec:
+  # http:
+  #   - name: mqqt-rule
+  #     match:
+  #       hosts:
+  #         - emqx.glegal.local
+  #     plugins:
+  #       - name: mqtt-proxy
+  #         enable: true
+  #         config:
+  #           "protocol_level": 4,
+  #           "protocol_name": "MQTT"
+  stream:
+    - name: mqqt-rule
+      protocol: TCP
+      match:
+        ingressPort: 9100
+      backend:
+        serviceName: emqx
+        servicePort: 1883
+        # resolveGranularity: service
+---
+apiVersion: apisix.apache.org/v2beta3
+kind: ApisixRoute
+metadata:
+  name: emqx-stream-mqtt-ws
+  namespace: emqx
+spec:
+  stream:
+    - name: mqqt-ws-rule
+      protocol: TCP
+      match:
+        ingressPort: 9110
+      backend:
+        serviceName: emqx
+        servicePort: 8083
+        # resolveGranularity: service

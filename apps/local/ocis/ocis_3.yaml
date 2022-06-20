@@ -1,0 +1,2730 @@
+---
+# Source: ocis/templates/_secrets/jwtsecret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: jwt-secret
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+type: Opaque
+data:
+    # TODO: create random default value when no value is set in values.yaml https://github.com/owncloud/ocis-charts/issues/9
+    OCIS_JWT_SECRET: "cmVwbGFjZS1tZS13aXRoLWEtcmVhbC1zZWNyZXQtMTIz"
+---
+# Source: ocis/templates/_secrets/machineauthapikey.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: machine-auth-api-key
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+type: Opaque
+data:
+    # TODO: create random default value when no value is set in values.yaml https://github.com/owncloud/ocis-charts/issues/9
+    OCIS_MACHINE_AUTH_API_KEY: "cmVwbGFjZS1tZS13aXRoLWEtcmVhbC1zZWNyZXQtNDU2"
+---
+# Source: ocis/templates/_secrets/transfersecret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: transfer-secret
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+type: Opaque
+data:
+    # TODO: create random default value when no value is set in values.yaml https://github.com/owncloud/ocis-charts/issues/9
+    STORAGE_TRANSFER_SECRET: "cmVwbGFjZS1tZS13aXRoLWEtcmVhbC1zZWNyZXQtNzg5"
+---
+# Source: ocis/templates/thumbnails/secrets.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: thumbnails-transfer-secret
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+type: Opaque
+data:
+    # TODO: create random default value when no value is set in values.yaml https://github.com/owncloud/ocis-charts/issues/9
+    THUMBNAILS_TRANSFER_TOKEN: "cmVwbGFjZS1tZS13aXRoLWEtcmVhbC1zZWNyZXQtMTIz"
+---
+# Source: ocis/templates/proxy/config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: proxy-config
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+data:
+  proxy.yaml: |
+    ---
+    policy_selector:
+      static:
+        policy: ocis
+    policies:
+    - name: ocis
+      routes:
+      - endpoint: "/"
+        backend: http://web:9100
+      - endpoint: "/.well-known/"
+        backend: http://idp:9130
+      - endpoint: "/konnect/"
+        backend: http://idp:9130
+      - endpoint: "/signin/"
+        backend: http://idp:9130
+      - type: regex
+        endpoint: "/ocs/v[12].php/cloud/(users?|groups)"
+        backend: http://ocs:9110
+      - endpoint: "/ocs/"
+        backend: http://storage-frontend:9140
+      - type: query
+        endpoint: "/remote.php/?preview=1"
+        backend: http://webdav:9115
+      - endpoint: "/remote.php/"
+        backend: http://storage-frontend:9140
+      - endpoint: "/dav/"
+        backend: http://storage-frontend:9140
+      - endpoint: "/webdav/"
+        backend: http://storage-frontend:9140
+      - endpoint: "/status.php"
+        backend: http://storage-frontend:9140
+      - endpoint: "/index.php/"
+        backend: http://storage-frontend:9140
+      - endpoint: "/data"
+        backend: http://storage-frontend:9140
+      - endpoint: "/app/"
+        backend: http://storage-frontend:9140
+      - endpoint: "/archiver"
+        backend: http://storage-frontend:9140
+      - endpoint: "/graph/"
+        backend: http://graph:9120
+      - endpoint: "/graph-explorer/"
+        backend: http://graph-explorer:9135
+      - endpoint: "/api/v0/accounts"
+        backend: http://accounts:9181
+      - endpoint: "/accounts.js"
+        backend: http://accounts:9181
+      - endpoint: "/api/v0/settings"
+        backend: http://settings:9190
+      - endpoint: "/settings.js"
+        backend: http://settings:9190
+---
+# Source: ocis/templates/_common/ocis-service-registry/clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ocis-service-registry
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+rules:
+- apiGroups:
+  - "" # "" indicates the core API group
+  resources:
+  - pods
+  verbs:
+  - list
+  - patch
+  - watch
+---
+# Source: ocis/templates/_common/ocis-service-registry/rolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ocis-service-registry
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ocis-service-registry
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: ocis
+---
+# Source: ocis/templates/accounts/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: accounts
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+    - name: grpc
+      port: 9180
+      protocol: TCP
+    - name: http
+      port: 9181
+      protocol: TCP
+  selector:
+    app: accounts
+---
+# Source: ocis/templates/glauth/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: glauth
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+    - name: ldap
+      port: 9125
+      protocol: TCP
+    - name: ldaps
+      port: 9126
+      protocol: TCP
+  selector:
+    app: glauth
+---
+# Source: ocis/templates/graph/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: graph
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+    - name: http
+      port: 9120
+      protocol: TCP
+  selector:
+    app: graph
+---
+# Source: ocis/templates/idp/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: idp
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+  - name: http
+    port: 9130
+    protocol: TCP
+  selector:
+    app: idp
+---
+# Source: ocis/templates/nats/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nats
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+    - name: nats
+      port: 9233
+      protocol: TCP
+  selector:
+    app: nats
+---
+# Source: ocis/templates/ocs/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ocs
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+    - name: http
+      port: 9110
+      protocol: TCP
+  selector:
+    app: ocs
+---
+# Source: ocis/templates/proxy/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: proxy
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+      app: proxy
+  ports:
+    - name: http
+      protocol: TCP
+      port: 9200
+      targetPort: 9200
+---
+# Source: ocis/templates/settings/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: settings
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+    - name: grpc
+      port: 9191
+      protocol: TCP
+    - name: http
+      port: 9190
+      protocol: TCP
+  selector:
+    app: settings
+---
+# Source: ocis/templates/storage-authbasic/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: storage-authbasic
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+    - name: grpc
+      port: 9146
+      protocol: TCP
+  selector:
+    app: storage-authbasic
+---
+# Source: ocis/templates/storage-authbearer/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: storage-authbearer
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+    - name: grpc
+      port: 9166
+      protocol: TCP
+  selector:
+    app: storage-authbearer
+---
+# Source: ocis/templates/storage-authmachine/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: storage-authmachine
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+    - name: grpc
+      port: 9148
+      protocol: TCP
+  selector:
+    app: storage-authmachine
+---
+# Source: ocis/templates/storage-frontend/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: storage-frontend
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+    - name: http
+      port: 9140
+      protocol: TCP
+  selector:
+    app: storage-frontend
+---
+# Source: ocis/templates/storage-gateway/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: storage-gateway
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+    - name: grpc
+      port: 9142
+      protocol: TCP
+  selector:
+    app: storage-gateway
+---
+# Source: ocis/templates/storage-groupprovider/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: storage-groupprovider
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+    - name: grpc
+      port: 9160
+      protocol: TCP
+  selector:
+    app: storage-groupprovider
+---
+# Source: ocis/templates/storage-metadata/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: storage-metadata
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+    - name: grpc
+      port: 9215
+      protocol: TCP
+    - name: http
+      port: 9216
+      protocol: TCP
+  selector:
+    app: storage-metadata
+---
+# Source: ocis/templates/storage-publiclink/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: storage-publiclink
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+    - name: grpc
+      port: 9178
+      protocol: TCP
+  selector:
+    app: storage-publiclink
+---
+# Source: ocis/templates/storage-shares/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: storage-shares
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+    - name: grpc
+      port: 9154
+      protocol: TCP
+  selector:
+    app: storage-shares
+---
+# Source: ocis/templates/storage-sharing/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: storage-sharing
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+    - name: grpc
+      port: 9150
+      protocol: TCP
+  selector:
+    app: storage-sharing
+---
+# Source: ocis/templates/storage-userprovider/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: storage-userprovider
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+    - name: grpc
+      port: 9144
+      protocol: TCP
+  selector:
+    app: storage-userprovider
+---
+# Source: ocis/templates/storage-users/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: storage-users
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+    - name: grpc
+      port: 9157
+      protocol: TCP
+    - name: http
+      port: 9158
+      protocol: TCP
+  selector:
+    app: storage-users
+---
+# Source: ocis/templates/store/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: store
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+    - name: grpc
+      port: 9460
+      protocol: TCP
+  selector:
+    app: store
+---
+# Source: ocis/templates/thumbnails/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: thumbnails
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+    - name: grpc
+      port: 9185
+      protocol: TCP
+    - name: http
+      port: 9186
+      protocol: TCP
+  selector:
+    app: thumbnails
+---
+# Source: ocis/templates/web/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+    - name: http
+      port: 9100
+      protocol: TCP
+  selector:
+    app: web
+---
+# Source: ocis/templates/webdav/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: webdav
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+    - name: http
+      port: 9115
+      protocol: TCP
+  selector:
+    app: webdav
+---
+# Source: ocis/templates/accounts/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: accounts
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: accounts
+  replicas: 1 #TODO: https://github.com/owncloud/ocis-charts/issues/12
+  strategy: 
+    type: RollingUpdate
+  
+  template:
+    metadata:
+      labels:
+        app: accounts
+        helm.sh/chart: ocis-0.1.0
+        app.kubernetes.io/name: ocis
+        app.kubernetes.io/instance: ocis
+        app.kubernetes.io/version: "1.19.1"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: accounts
+          image: "owncloud/ocis:1.19.1@sha256:3fdde158afabac6ec540756f651a59892baf2c9a2b2b03e82fddeb34fa83374b"
+          imagePullPolicy: IfNotPresent
+          command: ["ocis"]
+          args: ["accounts", "server"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+          env:
+            - name: MICRO_REGISTRY
+              value: kubernetes
+
+            - name: ACCOUNTS_LOG_COLOR
+              value: "false"
+            - name: ACCOUNTS_LOG_LEVEL
+              value: "error"
+            - name: ACCOUNTS_LOG_PRETTY
+              value: "false"
+
+            - name: ACCOUNTS_GRPC_ADDR
+              value: 0.0.0.0:9180
+            - name: ACCOUNTS_HTTP_ADDR
+              value: 0.0.0.0:9181
+
+            - name: ACCOUNTS_STORAGE_BACKEND
+              value: cs3
+            - name: ACCOUNTS_STORAGE_CS3_PROVIDER_ADDR
+              value: storage-metadata:9215
+          envFrom:
+            - secretRef:
+                name: jwt-secret
+          resources: 
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+            - name: grpc
+              containerPort: 9180
+            - name: http
+              containerPort: 9181
+---
+# Source: ocis/templates/glauth/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: glauth
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: glauth
+  replicas: 1
+  strategy: 
+    type: RollingUpdate
+  
+  template:
+    metadata:
+      labels:
+        app: glauth
+        helm.sh/chart: ocis-0.1.0
+        app.kubernetes.io/name: ocis
+        app.kubernetes.io/instance: ocis
+        app.kubernetes.io/version: "1.19.1"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: glauth
+          image: "owncloud/ocis:1.19.1@sha256:3fdde158afabac6ec540756f651a59892baf2c9a2b2b03e82fddeb34fa83374b"
+          imagePullPolicy: IfNotPresent
+          command: ["ocis"]
+          args: ["glauth", "server"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+          env:
+            - name: MICRO_REGISTRY
+              value: kubernetes
+
+            - name: GLAUTH_LOG_COLOR
+              value: "false"
+            - name: GLAUTH_LOG_LEVEL
+              value: "error"
+            - name: GLAUTH_LOG_PRETTY
+              value: "false"
+
+            - name: GLAUTH_LDAP_ADDR
+              value: 0.0.0.0:9125
+            - name: GLAUTH_LDAPS_ADDR
+              value: 0.0.0.0:9126
+
+            - name: GLAUTH_BACKEND_INSECURE # TODO: https://github.com/owncloud/ocis-charts/issues/32
+              value: "true"
+          resources: 
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+            - name: ldap
+              containerPort: 9125
+            - name: ldaps
+              containerPort: 9126
+---
+# Source: ocis/templates/graph/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: graph
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: graph
+  replicas: 1
+  strategy: 
+    type: RollingUpdate
+  
+  template:
+    metadata:
+      labels:
+        app: graph
+        helm.sh/chart: ocis-0.1.0
+        app.kubernetes.io/name: ocis
+        app.kubernetes.io/instance: ocis
+        app.kubernetes.io/version: "1.19.1"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: graph
+          image: "owncloud/ocis:1.19.1@sha256:3fdde158afabac6ec540756f651a59892baf2c9a2b2b03e82fddeb34fa83374b"
+          imagePullPolicy: IfNotPresent
+          command: ["ocis"]
+          args: ["graph", "server"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+          env:
+            - name: MICRO_REGISTRY
+              value: kubernetes
+
+            - name: GRAPH_LOG_COLOR
+              value: "false"
+            - name: GRAPH_LOG_LEVEL
+              value: "error"
+            - name: GRAPH_LOG_PRETTY
+              value: "false"
+
+            - name: GRAPH_HTTP_ADDR
+              value: 0.0.0.0:9120
+
+            - name: GRAPH_SPACES_WEBDAV_BASE
+              value: "https://ocis.glegal.local"
+
+            - name: REVA_GATEWAY
+              value: "storage-gateway:9142"
+
+            - name: GRAPH_LDAP_URI
+              value: ldap://glauth:9125
+          envFrom:
+            - secretRef:
+                name: jwt-secret
+          resources: 
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+            - name: http
+              containerPort: 9120
+---
+# Source: ocis/templates/idp/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: idp
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: idp
+  replicas: 1 #TODO: https://github.com/owncloud/ocis-charts/issues/12
+  strategy: 
+    type: RollingUpdate
+  
+  template:
+    metadata:
+      labels:
+        app: idp
+        helm.sh/chart: ocis-0.1.0
+        app.kubernetes.io/name: ocis
+        app.kubernetes.io/instance: ocis
+        app.kubernetes.io/version: "1.19.1"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: idp
+          image: "owncloud/ocis:1.19.1@sha256:3fdde158afabac6ec540756f651a59892baf2c9a2b2b03e82fddeb34fa83374b"
+          imagePullPolicy: IfNotPresent
+          command: ["ocis"]
+          args: ["idp", "server"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+          env:
+            - name: MICRO_REGISTRY
+              value: kubernetes
+
+            - name: IDP_LOG_COLOR
+              value: "false"
+            - name: IDP_LOG_LEVEL
+              value: "error"
+            - name: IDP_LOG_PRETTY
+              value: "false"
+
+            - name: IDP_HTTP_ADDR
+              value: 0.0.0.0:9130
+
+            - name: IDP_ISS
+              value: "https://ocis.glegal.local"
+
+            - name: IDP_LDAP_URI
+              value: ldap://glauth:9125
+            - name : IDP_INSECURE #TODO: https://github.com/owncloud/ocis-charts/issues/32
+              value: "true"
+          resources: 
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+            - name: http
+              containerPort: 9130
+---
+# Source: ocis/templates/nats/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nats
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: nats
+  replicas: 1 #TODO: https://github.com/owncloud/ocis-charts/issues/12
+  strategy: 
+    type: RollingUpdate
+  
+  template:
+    metadata:
+      labels:
+        app: nats
+        helm.sh/chart: ocis-0.1.0
+        app.kubernetes.io/name: ocis
+        app.kubernetes.io/instance: ocis
+        app.kubernetes.io/version: "1.19.1"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: nats
+          image: "owncloud/ocis:1.19.1@sha256:3fdde158afabac6ec540756f651a59892baf2c9a2b2b03e82fddeb34fa83374b"
+          imagePullPolicy: IfNotPresent
+          command: ["ocis"]
+          args: ["nats-server", "server"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+          env:
+            - name: NATS_LOG_COLOR
+              value: "false"
+            - name: NATS_LOG_LEVEL
+              value: "error"
+            - name: NATS_LOG_PRETTY
+              value: "false"
+
+            - name: NATS_NATS_HOST
+              value: "0.0.0.0"
+            - name: NATS_NATS_PORT
+              value: "9233"
+          resources: 
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+            - name: nats
+              containerPort: 9233
+---
+# Source: ocis/templates/ocs/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ocs
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: ocs
+  replicas: 1
+  strategy: 
+    type: RollingUpdate
+  
+  template:
+    metadata:
+      labels:
+        app: ocs
+        helm.sh/chart: ocis-0.1.0
+        app.kubernetes.io/name: ocis
+        app.kubernetes.io/instance: ocis
+        app.kubernetes.io/version: "1.19.1"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: ocs
+          image: "owncloud/ocis:1.19.1@sha256:3fdde158afabac6ec540756f651a59892baf2c9a2b2b03e82fddeb34fa83374b"
+          imagePullPolicy: IfNotPresent
+          command: ["ocis"]
+          args: ["ocs", "server"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+          env:
+            - name: MICRO_REGISTRY
+              value: kubernetes
+
+            - name: OCS_LOG_COLOR
+              value: "false"
+            - name: OCS_LOG_LEVEL
+              value: "error"
+            - name: OCS_LOG_PRETTY
+              value: "false"
+
+            - name: OCS_HTTP_ADDR
+              value: 0.0.0.0:9110
+
+            - name: OCS_ACCOUNT_BACKEND_TYPE
+              value: "accounts"
+            - name: OCS_IDM_ADDRESS
+              value: "https://ocis.glegal.local"
+
+            - name: REVA_GATEWAY
+              value: storage-gateway:9142
+          envFrom:
+            - secretRef:
+                name: jwt-secret
+            - secretRef:
+                name: machine-auth-api-key
+          resources: 
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+          - name: http
+            containerPort: 9110
+---
+# Source: ocis/templates/proxy/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proxy
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: proxy
+  replicas: 1
+  strategy: 
+    type: RollingUpdate
+  
+  template:
+    metadata:
+      labels:
+        app: proxy
+        helm.sh/chart: ocis-0.1.0
+        app.kubernetes.io/name: ocis
+        app.kubernetes.io/instance: ocis
+        app.kubernetes.io/version: "1.19.1"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      #hostAliases:
+      #  - ip: "127.0.0.1"
+      #    hostnames:
+      #      - "ocis.glegal.local"
+      containers:
+        #- name: idp-hack-sidecar
+        #  image: alpine/socat
+        #  args: ["tcp-l:443,fork,reuseaddr", "tcp:127.0.0.1:9200"]
+        - name: proxy
+          image: "owncloud/ocis:1.19.1@sha256:3fdde158afabac6ec540756f651a59892baf2c9a2b2b03e82fddeb34fa83374b"
+          imagePullPolicy: IfNotPresent
+          command: ["ocis"]
+          args: ["proxy", "server"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+          env:
+            - name: MICRO_REGISTRY
+              value: kubernetes
+
+            - name: PROXY_LOG_COLOR
+              value: "false"
+            - name: PROXY_LOG_LEVEL
+              value: "error"
+            - name: PROXY_LOG_PRETTY
+              value: "false"
+
+            - name: PROXY_HTTP_ADDR
+              value: 0.0.0.0:9200
+            - name: PROXY_AUTOPROVISION_ACCOUNTS
+              value: "true"
+            - name: PROXY_ENABLE_BASIC_AUTH
+              value: "true"
+            - name: PROXY_OIDC_ISSUER
+              value: "https://ocis.glegal.local"
+            - name: PROXY_TLS
+              value: "false"
+
+            - name: PROXY_OIDC_INSECURE # TODO: https://github.com/owncloud/ocis-charts/issues/32
+              value: "true"
+            - name: PROXY_INSECURE_BACKENDS
+              value: "false"
+
+            - name: REVA_GATEWAY
+              value: storage-gateway:9142
+          envFrom:
+            - secretRef:
+                name: jwt-secret
+            - secretRef:
+                name: machine-auth-api-key
+          resources: 
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+            - name: http
+              containerPort: 9200
+          volumeMounts:
+            - name: configs
+              mountPath: /etc/ocis
+      volumes:
+        - name: configs
+          configMap:
+            name: proxy-config
+---
+# Source: ocis/templates/settings/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: settings
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: settings
+  replicas: 1
+  strategy: 
+    type: RollingUpdate
+  
+  template:
+    metadata:
+      labels:
+        app: settings
+        helm.sh/chart: ocis-0.1.0
+        app.kubernetes.io/name: ocis
+        app.kubernetes.io/instance: ocis
+        app.kubernetes.io/version: "1.19.1"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: settings
+          image: "owncloud/ocis:1.19.1@sha256:3fdde158afabac6ec540756f651a59892baf2c9a2b2b03e82fddeb34fa83374b"
+          imagePullPolicy: IfNotPresent
+          command: ["ocis"]
+          args: ["settings", "server"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+          env:
+            - name: MICRO_REGISTRY
+              value: kubernetes
+
+            - name: SETTINGS_LOG_COLOR
+              value: "false"
+            - name: SETTINGS_LOG_LEVEL
+              value: "error"
+            - name: SETTINGS_LOG_PRETTY
+              value: "false"
+
+            - name: SETTINGS_HTTP_ADDR
+              value: 0.0.0.0:9190
+            - name: SETTINGS_GRPC_ADDR
+              value: 0.0.0.0:9191
+
+            - name: SETTINGS_STORE_TYPE
+              value: metadata
+            - name: STORAGE_GATEWAY_GRPC_ADDR
+              value: storage-gateway:9142
+            - name: STORAGE_GRPC_ADDR
+              value: storage-metadata:9215
+            - name: METADATA_SERVICE_USER_IDP # TODO: https://github.com/owncloud/ocis-charts/issues/35
+              value: "https://ocis.glegal.local"
+          envFrom:
+            - secretRef:
+                name: jwt-secret
+            - secretRef:
+                name: machine-auth-api-key
+          resources: 
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+            - name: http
+              containerPort: 9190
+            - name: grpc
+              containerPort: 9191
+---
+# Source: ocis/templates/storage-authbasic/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storage-authbasic
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: storage-authbasic
+  replicas: 1
+  strategy: 
+    type: RollingUpdate
+  
+  template:
+    metadata:
+      labels:
+        app: storage-authbasic
+        helm.sh/chart: ocis-0.1.0
+        app.kubernetes.io/name: ocis
+        app.kubernetes.io/instance: ocis
+        app.kubernetes.io/version: "1.19.1"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: storage-authbasic
+          image: "owncloud/ocis:1.19.1@sha256:3fdde158afabac6ec540756f651a59892baf2c9a2b2b03e82fddeb34fa83374b"
+          imagePullPolicy: IfNotPresent
+          command: ["ocis"]
+          args: ["storage-auth-basic", "server"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+          env:
+            - name: MICRO_REGISTRY
+              value: kubernetes
+
+            - name: OCIS_LOG_COLOR
+              value: "false"
+            - name: OCIS_LOG_LEVEL
+              value: "error"
+            - name: OCIS_LOG_PRETTY
+              value: "false"
+
+            - name: STORAGE_AUTH_BASIC_GRPC_ADDR
+              value: 0.0.0.0:9146
+            - name: STORAGE_AUTH_BASIC_ENDPOINT
+              value: "storage-authbasic:9146"
+
+            - name: REVA_GATEWAY
+              value: storage-gateway:9142
+          envFrom:
+            - secretRef:
+                name: jwt-secret
+          resources: 
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+          - name: grpc
+            containerPort: 9146
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
+      volumes:
+        - name: tmp-volume
+          emptyDir:
+            medium: Memory
+            sizeLimit: 6Mi
+---
+# Source: ocis/templates/storage-authbearer/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storage-authbearer
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: storage-authbearer
+  replicas: 1
+  strategy: 
+    type: RollingUpdate
+  
+  template:
+    metadata:
+      labels:
+        app: storage-authbearer
+        helm.sh/chart: ocis-0.1.0
+        app.kubernetes.io/name: ocis
+        app.kubernetes.io/instance: ocis
+        app.kubernetes.io/version: "1.19.1"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: storage-authbearer
+          image: "owncloud/ocis:1.19.1@sha256:3fdde158afabac6ec540756f651a59892baf2c9a2b2b03e82fddeb34fa83374b"
+          imagePullPolicy: IfNotPresent
+          command: ["ocis"]
+          args: ["storage-auth-bearer", "server"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+          env:
+            - name: MICRO_REGISTRY
+              value: kubernetes
+
+            - name: OCIS_LOG_COLOR
+              value: "false"
+            - name: OCIS_LOG_LEVEL
+              value: "error"
+            - name: OCIS_LOG_PRETTY
+              value: "false"
+
+            - name: STORAGE_AUTH_BEARER_GRPC_ADDR
+              value: 0.0.0.0:9166
+            - name: STORAGE_AUTH_BEARER_ENDPOINT
+              value: "storage-authbearer:9166"
+
+            - name: REVA_GATEWAY
+              value: storage-gateway:9142
+          envFrom:
+            - secretRef:
+                name: jwt-secret
+          resources: 
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+            - name: grpc
+              containerPort: 9166
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
+      volumes:
+        - name: tmp-volume
+          emptyDir:
+            medium: Memory
+            sizeLimit: 6Mi
+---
+# Source: ocis/templates/storage-authmachine/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storage-authmachine
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: storage-authmachine
+  replicas: 1
+  strategy: 
+    type: RollingUpdate
+  
+  template:
+    metadata:
+      labels:
+        app: storage-authmachine
+        helm.sh/chart: ocis-0.1.0
+        app.kubernetes.io/name: ocis
+        app.kubernetes.io/instance: ocis
+        app.kubernetes.io/version: "1.19.1"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: storage-authmachine
+          image: "owncloud/ocis:1.19.1@sha256:3fdde158afabac6ec540756f651a59892baf2c9a2b2b03e82fddeb34fa83374b"
+          imagePullPolicy: IfNotPresent
+          command: ["ocis"]
+          args: ["storage-auth-machine", "server"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+          env:
+            - name: MICRO_REGISTRY
+              value: kubernetes
+
+            - name: OCIS_LOG_COLOR
+              value: "false"
+            - name: OCIS_LOG_LEVEL
+              value: "error"
+            - name: OCIS_LOG_PRETTY
+              value: "false"
+
+            - name: STORAGE_AUTH_MACHINE_GRPC_ADDR
+              value: 0.0.0.0:9148
+            - name: STORAGE_AUTH_MACHINE_ENDPOINT
+              value: "storage-authmachine:9148"
+
+            - name: REVA_GATEWAY
+              value: storage-gateway:9142
+          envFrom:
+            - secretRef:
+                name: jwt-secret
+            - secretRef:
+                name: machine-auth-api-key
+          resources: 
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+            - name: grpc
+              containerPort: 9148
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
+      volumes:
+        - name: tmp-volume
+          emptyDir:
+            medium: Memory
+            sizeLimit: 6Mi
+---
+# Source: ocis/templates/storage-frontend/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storage-frontend
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: storage-frontend
+  replicas: 1
+  strategy: 
+    type: RollingUpdate
+  
+  template:
+    metadata:
+      labels:
+        app: storage-frontend
+        helm.sh/chart: ocis-0.1.0
+        app.kubernetes.io/name: ocis
+        app.kubernetes.io/instance: ocis
+        app.kubernetes.io/version: "1.19.1"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: storage-frontend
+          image: "owncloud/ocis:1.19.1@sha256:3fdde158afabac6ec540756f651a59892baf2c9a2b2b03e82fddeb34fa83374b"
+          imagePullPolicy: IfNotPresent
+          command: ["ocis"]
+          args: ["storage-frontend", "server"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+          env:
+            - name: MICRO_REGISTRY
+              value: kubernetes
+
+            - name: STORAGE_FRONTEND_LOG_COLOR
+              value: "false"
+            - name: STORAGE_FRONTEND_LOG_LEVEL
+              value: "error"
+            - name: STORAGE_FRONTEND_LOG_PRETTY
+              value: "false"
+
+            - name: STORAGE_FRONTEND_HTTP_ADDR
+              value: 0.0.0.0:9140
+            - name: STORAGE_FRONTEND_PUBLIC_URL
+              value: "https://ocis.glegal.local"
+
+            - name: STORAGE_FRONTEND_APPPROVIDER_INSECURE # TODO: https://github.com/owncloud/ocis-charts/issues/32
+              value: "true"
+            - name: STORAGE_FRONTEND_ARCHIVER_INSECURE # TODO: https://github.com/owncloud/ocis-charts/issues/32
+              value: "true"
+            - name: STORAGE_FRONTEND_OCDAV_INSECURE # TODO: https://github.com/owncloud/ocis-charts/issues/32
+              value: "true"
+
+            - name: STORAGE_SHARING_ENDPOINT
+              value: "storage-sharing:9150"
+
+            - name: REVA_GATEWAY
+              value: storage-gateway:9142
+          envFrom:
+            - secretRef:
+                name: jwt-secret
+            - secretRef:
+                name: machine-auth-api-key
+            - secretRef:
+                name: transfer-secret
+          resources: 
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+          - name: http
+            containerPort: 9140
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
+      volumes:
+        - name: tmp-volume
+          emptyDir:
+            medium: Memory
+            sizeLimit: 6Mi
+---
+# Source: ocis/templates/storage-gateway/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storage-gateway
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: storage-gateway
+  replicas: 1
+  strategy: 
+    type: RollingUpdate
+  
+  template:
+    metadata:
+      labels:
+        app: storage-gateway
+        helm.sh/chart: ocis-0.1.0
+        app.kubernetes.io/name: ocis
+        app.kubernetes.io/instance: ocis
+        app.kubernetes.io/version: "1.19.1"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: storage-gateway
+          image: "owncloud/ocis:1.19.1@sha256:3fdde158afabac6ec540756f651a59892baf2c9a2b2b03e82fddeb34fa83374b"
+          imagePullPolicy: IfNotPresent
+          command: ["ocis"]
+          args: ["storage-gateway", "server"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+          env:
+            - name: MICRO_REGISTRY
+              value: kubernetes
+
+            - name: OCIS_LOG_COLOR
+              value: "false"
+            - name: OCIS_LOG_LEVEL
+              value: "error"
+            - name: OCIS_LOG_PRETTY
+              value: "false"
+
+            - name: STORAGE_GATEWAY_GRPC_ADDR
+              value: 0.0.0.0:9142
+            - name: REVA_GATEWAY
+              value: storage-gateway:9142
+
+            - name: STORAGE_FRONTEND_PUBLIC_URL
+              value: "https://ocis.glegal.local"
+
+            - name: STORAGE_USERS_ENDPOINT
+              value: "storage-users:9157"
+
+            - name: STORAGE_PUBLIC_LINK_ENDPOINT
+              value: "storage-publiclink:9178"
+
+            - name: STORAGE_AUTH_BASIC_ENDPOINT
+              value: "storage-authbasic:9146"
+            - name: STORAGE_AUTH_BEARER_ENDPOINT
+              value: "storage-authbearer:9166"
+            - name: STORAGE_AUTH_MACHINE_ENDPOINT
+              value: "storage-authmachine:9148"
+
+            - name: STORAGE_SHARES_ENDPOINT
+              value: "storage-shares:9154"
+            - name: STORAGE_SHARING_ENDPOINT
+              value: "storage-sharing:9150"
+
+            - name: STORAGE_GROUPPROVIDER_ENDPOINT
+              value: "storage-groupprovider:9160"
+            - name: STORAGE_USERPROVIDER_ENDPOINT
+              value: "storage-userprovider:9144"
+            - name: STORAGE_PERMISSIONS_ENDPOINT
+              value: "settings:9191"
+          envFrom:
+            - secretRef:
+                name: jwt-secret
+            - secretRef:
+                name: transfer-secret
+          resources: 
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+            - name: grpc
+              containerPort: 9142
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
+      volumes:
+        - name: tmp-volume
+          emptyDir:
+            medium: Memory
+            sizeLimit: 6Mi
+---
+# Source: ocis/templates/storage-groupprovider/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storage-groupprovider
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: storage-groupprovider
+  replicas: 1
+  strategy: 
+    type: RollingUpdate
+  
+  template:
+    metadata:
+      labels:
+        app: storage-groupprovider
+        helm.sh/chart: ocis-0.1.0
+        app.kubernetes.io/name: ocis
+        app.kubernetes.io/instance: ocis
+        app.kubernetes.io/version: "1.19.1"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: storage-groupprovider
+          image: "owncloud/ocis:1.19.1@sha256:3fdde158afabac6ec540756f651a59892baf2c9a2b2b03e82fddeb34fa83374b"
+          imagePullPolicy: IfNotPresent
+          command: ["ocis"]
+          args: ["storage-groupprovider", "server"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+          env:
+            - name: MICRO_REGISTRY
+              value: kubernetes
+
+            - name: OCIS_LOG_COLOR
+              value: "false"
+            - name: OCIS_LOG_LEVEL
+              value: "error"
+            - name: OCIS_LOG_PRETTY
+              value: "false"
+
+            - name: STORAGE_GROUPPROVIDER_ADDR
+              value: 0.0.0.0:9160
+            - name: STORAGE_GROUPPROVIDER_ENDPOINT
+              value: "storage-groupprovider:9160"
+
+            - name: STORAGE_GROUPPROVIDER_DRIVER
+              value: "ldap"
+            - name: STORAGE_LDAP_HOSTNAME
+              value: "glauth"
+            - name: STORAGE_LDAP_PORT
+              value: "9126"
+            - name: STORAGE_LDAP_INSECURE # TODO: https://github.com/owncloud/ocis-charts/issues/32
+              value: "true"
+
+            - name: STORAGE_LDAP_IDP
+              value: "https://ocis.glegal.local"
+
+            - name: REVA_GATEWAY
+              value: storage-gateway:9142
+          envFrom:
+            - secretRef:
+                name: jwt-secret
+          resources: 
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+            - name: grpc
+              containerPort: 9160
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
+      volumes:
+        - name: tmp-volume
+          emptyDir:
+            medium: Memory
+            sizeLimit: 6Mi
+---
+# Source: ocis/templates/storage-metadata/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storage-metadata
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: storage-metadata
+  replicas: 1 #TODO: https://github.com/owncloud/ocis-charts/issues/12
+  strategy: 
+    type: RollingUpdate
+  
+  template:
+    metadata:
+      labels:
+        app: storage-metadata
+        helm.sh/chart: ocis-0.1.0
+        app.kubernetes.io/name: ocis
+        app.kubernetes.io/instance: ocis
+        app.kubernetes.io/version: "1.19.1"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: storage-metadata
+          image: "owncloud/ocis:1.19.1@sha256:3fdde158afabac6ec540756f651a59892baf2c9a2b2b03e82fddeb34fa83374b"
+          imagePullPolicy: IfNotPresent
+          command: ["ocis"]
+          args: ["storage-metadata", "server"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+          env:
+            - name: MICRO_REGISTRY
+              value: kubernetes
+
+            # logging
+            - name: OCIS_LOG_COLOR
+              value: "false"
+            - name: OCIS_LOG_LEVEL
+              value: "error"
+            - name: OCIS_LOG_PRETTY
+              value: "false"
+
+            # external availability grpc
+            - name: STORAGE_METADATA_GRPC_ADDR
+              value: 0.0.0.0:9215
+
+            # external availability data gateway
+            - name: STORAGE_METADATA_HTTP_ADDR
+              value: 0.0.0.0:9216
+            - name: STORAGE_METADATA_DATA_SERVER_URL
+              value: "http://storage-metadata:9216/data"
+
+            # data gateway
+            - name: STORAGE_METADATA_DATAPROVIDER_INSECURE # TODO: https://github.com/owncloud/ocis-charts/issues/32
+              value: "true"
+
+            # oCIS storage driver (decomposed filesystem)
+            - name: STORAGE_METADATA_DRIVER
+              value: "ocis"
+
+            # permissions middleware
+            - name: STORAGE_PERMISSIONS_ENDPOINT
+              value: "settings:9191"
+            - name: REVA_GATEWAY
+              value: "storage-gateway:9142"
+          envFrom:
+            - secretRef:
+                name: jwt-secret
+            - secretRef:
+                name: transfer-secret
+          resources: 
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+            - name: grpc
+              containerPort: 9215
+            - name: http
+              containerPort: 9216
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
+            - name: storage-metadata-data
+              mountPath: /var/lib/ocis
+      volumes:
+        - name: tmp-volume
+          emptyDir:
+              medium: Memory
+              sizeLimit: 6Mi
+        - name: storage-metadata-data
+          emptyDir: {}
+---
+# Source: ocis/templates/storage-publiclink/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storage-publiclink
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: storage-publiclink
+  replicas: 1
+  strategy: 
+    type: RollingUpdate
+  
+  template:
+    metadata:
+      labels:
+        app: storage-publiclink
+        helm.sh/chart: ocis-0.1.0
+        app.kubernetes.io/name: ocis
+        app.kubernetes.io/instance: ocis
+        app.kubernetes.io/version: "1.19.1"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: storage-publiclink
+          image: "owncloud/ocis:1.19.1@sha256:3fdde158afabac6ec540756f651a59892baf2c9a2b2b03e82fddeb34fa83374b"
+          imagePullPolicy: IfNotPresent
+          command: ["ocis"]
+          args: ["storage-public-link", "server"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+          env:
+            - name: MICRO_REGISTRY
+              value: kubernetes
+
+            - name: OCIS_LOG_COLOR
+              value: "false"
+            - name: OCIS_LOG_LEVEL
+              value: "error"
+            - name: OCIS_LOG_PRETTY
+              value: "false"
+
+            - name: STORAGE_PUBLIC_LINK_GRPC_ADDR
+              value: 0.0.0.0:9178
+            - name: STORAGE_PUBLIC_LINK_ENDPOINT
+              value: "storage-shares:9178"
+
+            - name: REVA_GATEWAY
+              value: storage-gateway:9142
+          envFrom:
+            - secretRef:
+                name: jwt-secret
+          resources: 
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+          - name: grpc
+            containerPort: 9178
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
+      volumes:
+        - name: tmp-volume
+          emptyDir:
+            medium: Memory
+            sizeLimit: 6Mi
+---
+# Source: ocis/templates/storage-shares/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storage-shares
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: storage-shares
+  replicas: 1
+  strategy: 
+    type: RollingUpdate
+  
+  template:
+    metadata:
+      labels:
+        app: storage-shares
+        helm.sh/chart: ocis-0.1.0
+        app.kubernetes.io/name: ocis
+        app.kubernetes.io/instance: ocis
+        app.kubernetes.io/version: "1.19.1"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: storage-shares
+          image: "owncloud/ocis:1.19.1@sha256:3fdde158afabac6ec540756f651a59892baf2c9a2b2b03e82fddeb34fa83374b"
+          imagePullPolicy: IfNotPresent
+          command: ["ocis"]
+          args: ["storage-shares", "server"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+          env:
+            - name: MICRO_REGISTRY
+              value: kubernetes
+
+            - name: OCIS_LOG_COLOR
+              value: "false"
+            - name: OCIS_LOG_LEVEL
+              value: "error"
+            - name: OCIS_LOG_PRETTY
+              value: "false"
+
+            - name: STORAGE_SHARES_GRPC_ADDR
+              value: 0.0.0.0:9154
+            - name: STORAGE_SHARES_ENDPOINT
+              value: "storage-shares:9154"
+
+            - name: STORAGE_SHARING_ENDPOINT
+              value: "storage-sharing:9150"
+
+            - name: REVA_GATEWAY
+              value: storage-gateway:9142
+          envFrom:
+            - secretRef:
+                name: jwt-secret
+            - secretRef:
+                name: transfer-secret
+          resources: 
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+            - name: grpc
+              containerPort: 9154
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
+      volumes:
+        - name: tmp-volume
+          emptyDir:
+            medium: Memory
+            sizeLimit: 6Mi
+---
+# Source: ocis/templates/storage-sharing/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storage-sharing
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: storage-sharing
+  replicas: 1 #TODO: https://github.com/owncloud/ocis-charts/issues/12
+  strategy: 
+    type: RollingUpdate
+  
+  template:
+    metadata:
+      labels:
+        app: storage-sharing
+        helm.sh/chart: ocis-0.1.0
+        app.kubernetes.io/name: ocis
+        app.kubernetes.io/instance: ocis
+        app.kubernetes.io/version: "1.19.1"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: storage-sharing
+          image: "owncloud/ocis:1.19.1@sha256:3fdde158afabac6ec540756f651a59892baf2c9a2b2b03e82fddeb34fa83374b"
+          imagePullPolicy: IfNotPresent
+          command: ["ocis"]
+          args: ["storage-sharing", "server"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+          env:
+            - name: MICRO_REGISTRY
+              value: kubernetes
+
+            - name: OCIS_LOG_COLOR
+              value: "false"
+            - name: OCIS_LOG_LEVEL
+              value: "error"
+            - name: OCIS_LOG_PRETTY
+              value: "false"
+
+            - name: STORAGE_SHARING_GRPC_ADDR
+              value: 0.0.0.0:9150
+            - name: STORAGE_SHARING_ENDPOINT
+              value: 'storage-users:9150'
+
+            - name: STORAGE_USERS_HTTP_ADDR
+              value: 0.0.0.0:9158
+            - name: STORAGE_USERS_DATA_SERVER_URL
+              value: "http://storage-users:9158/data"
+
+            - name: STORAGE_SHARING_USER_DRIVER
+              value: "json"
+            - name: STORAGE_SHARING_PUBLIC_DRIVER
+              value: "json"
+
+            - name: STORAGE_SHARING_EVENTS_ADDRESS
+              value: nats:9233
+
+            - name: REVA_GATEWAY
+              value: "storage-gateway:9142"
+          envFrom:
+            - secretRef:
+                name: jwt-secret
+          resources: 
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+            - name: grpc
+              containerPort: 9150
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
+            - name: storage-sharing-data
+              mountPath: /var/lib/ocis
+      volumes:
+        - name: tmp-volume
+          emptyDir:
+            medium: Memory
+            sizeLimit: 6Mi
+        - name: storage-sharing-data
+          emptyDir: {}
+---
+# Source: ocis/templates/storage-userprovider/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storage-userprovider
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: storage-userprovider
+  replicas: 1
+  strategy: 
+    type: RollingUpdate
+  
+  template:
+    metadata:
+      labels:
+        app: storage-userprovider
+        helm.sh/chart: ocis-0.1.0
+        app.kubernetes.io/name: ocis
+        app.kubernetes.io/instance: ocis
+        app.kubernetes.io/version: "1.19.1"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: storage-userprovider
+          image: "owncloud/ocis:1.19.1@sha256:3fdde158afabac6ec540756f651a59892baf2c9a2b2b03e82fddeb34fa83374b"
+          imagePullPolicy: IfNotPresent
+          command: ["ocis"]
+          args: ["storage-userprovider", "server"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+          env:
+            - name: MICRO_REGISTRY
+              value: kubernetes
+
+            - name: OCIS_LOG_COLOR
+              value: "false"
+            - name: OCIS_LOG_LEVEL
+              value: "error"
+            - name: OCIS_LOG_PRETTY
+              value: "false"
+
+            - name: STORAGE_USERPROVIDER_ADDR
+              value: 0.0.0.0:9144
+            - name: STORAGE_USERPROVIDER_ENDPOINT
+              value: "storage-userprovider:9144"
+
+            - name: STORAGE_USERPROVIDER_DRIVER
+              value: "ldap"
+            - name: STORAGE_LDAP_HOSTNAME
+              value: "glauth"
+            - name: STORAGE_LDAP_PORT
+              value: "9126"
+            - name: STORAGE_LDAP_INSECURE # TODO: https://github.com/owncloud/ocis-charts/issues/32
+              value: "true"
+
+            - name: STORAGE_LDAP_IDP
+              value: "https://ocis.glegal.local"
+
+            - name: REVA_GATEWAY
+              value: storage-gateway:9142
+          envFrom:
+            - secretRef:
+                name: jwt-secret
+          resources: 
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+            - name: grpc
+              containerPort: 9144
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
+      volumes:
+        - name: tmp-volume
+          emptyDir:
+            medium: Memory
+            sizeLimit: 6Mi
+---
+# Source: ocis/templates/storage-users/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storage-users
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: storage-users
+  replicas: 1 #TODO: https://github.com/owncloud/ocis-charts/issues/12
+  strategy: 
+    type: RollingUpdate
+  
+  template:
+    metadata:
+      labels:
+        app: storage-users
+        helm.sh/chart: ocis-0.1.0
+        app.kubernetes.io/name: ocis
+        app.kubernetes.io/instance: ocis
+        app.kubernetes.io/version: "1.19.1"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: storage-users
+          image: "owncloud/ocis:1.19.1@sha256:3fdde158afabac6ec540756f651a59892baf2c9a2b2b03e82fddeb34fa83374b"
+          imagePullPolicy: IfNotPresent
+          command: ["ocis"]
+          args: ["storage-users", "server"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+          env:
+            - name: MICRO_REGISTRY
+              value: kubernetes
+
+            # logging
+            - name: OCIS_LOG_COLOR
+              value: "false"
+            - name: OCIS_LOG_LEVEL
+              value: "error"
+            - name: OCIS_LOG_PRETTY
+              value: "false"
+
+            # external availability grpc
+            - name: STORAGE_USERS_GRPC_ADDR
+              value: 0.0.0.0:9157
+
+            # external availability data gateway
+            - name: STORAGE_USERS_HTTP_ADDR
+              value: 0.0.0.0:9158
+            - name: STORAGE_USERS_DATA_SERVER_URL
+              value: "http://storage-users:9158/data"
+
+            # data gateway
+            - name: STORAGE_USERS_DATAPROVIDER_INSECURE # TODO: https://github.com/owncloud/ocis-charts/issues/32
+              value: "true"
+
+            # oCIS storage driver (decomposed filesystem)
+            - name: STORAGE_USERS_DRIVER
+              value: ocis
+
+            # S3ng storage driver (decomposed filesystem)
+
+            # events
+            - name: STORAGE_SHARING_EVENTS_ADDRESS
+              value: nats:9233
+
+            # permissions middleware
+            - name: STORAGE_PERMISSIONS_ENDPOINT
+              value: "settings:9191"
+            - name: REVA_GATEWAY
+              value: "storage-gateway:9142"
+          envFrom:
+            - secretRef:
+                name: jwt-secret
+            - secretRef:
+                name: transfer-secret
+          resources: 
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+            - name: grpc
+              containerPort: 9157
+            - name: http
+              containerPort: 9158
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
+            - name: storage-users-data
+              mountPath: /var/lib/ocis
+      volumes:
+        - name: tmp-volume
+          emptyDir:
+            medium: Memory
+            sizeLimit: 6Mi
+        - name: storage-users-data
+          emptyDir: {}
+---
+# Source: ocis/templates/store/deployment.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: store
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: store
+  replicas: 1 #TODO: https://github.com/owncloud/ocis-charts/issues/12
+  strategy: 
+    type: RollingUpdate
+  
+  template:
+    metadata:
+      labels:
+        app: store
+        helm.sh/chart: ocis-0.1.0
+        app.kubernetes.io/name: ocis
+        app.kubernetes.io/instance: ocis
+        app.kubernetes.io/version: "1.19.1"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: store
+          image: "owncloud/ocis:1.19.1@sha256:3fdde158afabac6ec540756f651a59892baf2c9a2b2b03e82fddeb34fa83374b"
+          imagePullPolicy: IfNotPresent
+          command: ["ocis"]
+          args: ["store", "server"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+          env:
+            - name: MICRO_REGISTRY
+              value: kubernetes
+
+            - name: STORE_LOG_COLOR
+              value: "false"
+            - name: STORE_LOG_LEVEL
+              value: "error"
+            - name: STORE_LOG_PRETTY
+              value: "false"
+
+            - name: STORE_GRPC_ADDR
+              value: 0.0.0.0:9460
+          resources: 
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+            - name: grpc
+              containerPort: 9460
+          volumeMounts:
+            - name: store-data
+              mountPath: /var/lib/ocis
+      volumes:
+        - name: store-data
+          emptyDir: {}
+---
+# Source: ocis/templates/thumbnails/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thumbnails
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: thumbnails
+  replicas: 1
+  strategy: 
+    type: RollingUpdate
+  
+  template:
+    metadata:
+      labels:
+        app: thumbnails
+        helm.sh/chart: ocis-0.1.0
+        app.kubernetes.io/name: ocis
+        app.kubernetes.io/instance: ocis
+        app.kubernetes.io/version: "1.19.1"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: thumbnails
+          image: "owncloud/ocis:1.19.1@sha256:3fdde158afabac6ec540756f651a59892baf2c9a2b2b03e82fddeb34fa83374b"
+          imagePullPolicy: IfNotPresent
+          command: ["ocis"]
+          args: ["thumbnails", "server"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+          env:
+            - name: MICRO_REGISTRY
+              value: kubernetes
+
+            - name: THUMBNAILS_LOG_COLOR
+              value: "false"
+            - name: THUMBNAILS_LOG_LEVEL
+              value: "error"
+            - name: THUMBNAILS_LOG_PRETTY
+              value: "false"
+
+            - name: THUMBNAILS_GRPC_ADDR
+              value: 0.0.0.0:9185
+            - name: THUMBNAILS_HTTP_ADDR
+              value: 0.0.0.0:9186
+
+            - name: THUMBNAILS_DATA_ENDPOINT
+              value: http://thumbnails:9186/thumbnails/data
+
+            - name: THUMBNAILS_CS3SOURCE_INSECURE # TODO: https://github.com/owncloud/ocis-charts/issues/32
+              value: "true"
+
+            - name: REVA_GATEWAY
+              value: storage-gateway:9142
+          envFrom:
+            - secretRef:
+                name: thumbnails-transfer-secret
+          resources: 
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+            - name: grpc
+              containerPort: 9185
+            - name: http
+              containerPort: 9186
+          volumeMounts:
+            - name: thumbnails-data
+              mountPath: /var/lib/ocis
+      volumes:
+        - name: thumbnails-data
+          emptyDir: {}
+---
+# Source: ocis/templates/web/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: web
+  replicas: 1
+  strategy: 
+    type: RollingUpdate
+  
+  template:
+    metadata:
+      labels:
+        app: web
+        helm.sh/chart: ocis-0.1.0
+        app.kubernetes.io/name: ocis
+        app.kubernetes.io/instance: ocis
+        app.kubernetes.io/version: "1.19.1"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: web
+          image: "owncloud/ocis:1.19.1@sha256:3fdde158afabac6ec540756f651a59892baf2c9a2b2b03e82fddeb34fa83374b"
+          imagePullPolicy: IfNotPresent
+          command: ["ocis"]
+          args: ["web", "server"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+          env:
+            - name: MICRO_REGISTRY
+              value: kubernetes
+
+            - name: WEB_LOG_COLOR
+              value: "false"
+            - name: WEB_LOG_LEVEL
+              value: "error"
+            - name: WEB_LOG_PRETTY
+              value: "false"
+
+            - name: WEB_HTTP_ADDR
+              value: 0.0.0.0:9100
+
+            - name: WEB_OIDC_AUTHORITY
+              value: "https://ocis.glegal.local"
+            - name: WEB_UI_THEME_SERVER
+              value: "https://ocis.glegal.local"
+            - name: WEB_UI_CONFIG_SERVER
+              value: "https://ocis.glegal.local"
+          resources: 
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+            - name: http
+              containerPort: 9100
+---
+# Source: ocis/templates/webdav/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webdav
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: webdav
+  replicas: 1
+  strategy: 
+    type: RollingUpdate
+  
+  template:
+    metadata:
+      labels:
+        app: webdav
+        helm.sh/chart: ocis-0.1.0
+        app.kubernetes.io/name: ocis
+        app.kubernetes.io/instance: ocis
+        app.kubernetes.io/version: "1.19.1"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      containers:
+        - name: webdav
+          image: "owncloud/ocis:1.19.1@sha256:3fdde158afabac6ec540756f651a59892baf2c9a2b2b03e82fddeb34fa83374b"
+          imagePullPolicy: IfNotPresent
+          command: ["ocis"]
+          args: ["webdav", "server"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+          env:
+            - name: MICRO_REGISTRY
+              value: kubernetes
+
+            - name: WEBDAV_LOG_COLOR
+              value: "false"
+            - name: WEBDAV_LOG_LEVEL
+              value: "error"
+            - name: WEBDAV_LOG_PRETTY
+              value: "false"
+
+            - name: WEBDAV_HTTP_ADDR
+              value: 0.0.0.0:9115
+
+            - name: OCIS_PUBLIC_URL
+              value: "https://ocis.glegal.local"
+            - name: REVA_GATEWAY
+              value: "storage-gateway:9142"
+          resources: 
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+            - name: http
+              containerPort: 9115
+---
+# Source: ocis/templates/proxy/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "proxy"
+  namespace: ocis
+  labels:
+    helm.sh/chart: ocis-0.1.0
+    app.kubernetes.io/name: ocis
+    app.kubernetes.io/instance: ocis
+    app.kubernetes.io/version: "1.19.1"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/issuer: issuer
+spec:
+  ingressClassName: apisix
+  tls:
+    - hosts:
+      - ocis.glegal.local
+      secretName: example-cert
+  rules:
+    - host: "ocis.glegal.local"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "proxy"
+                port:
+                  number: 9200
+---
+# Source: ocis/templates/storage-gateway/ingress.yaml
+#TODO: optionally expose the CS3 api gateway: https://github.com/owncloud/ocis-charts/issues/14

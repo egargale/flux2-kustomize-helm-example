@@ -1,0 +1,6 @@
+namespace: kubeedge
+
+resources:
+  - namespace.yml
+  - kubeedge-cloudcore.yaml
+ 
