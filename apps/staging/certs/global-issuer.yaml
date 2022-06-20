@@ -9,15 +9,15 @@ spec:
     privateKeySecretRef:
       name: example-issuer-account-key
     solvers:
-    - selector:
-        dnsZones:
-          - "hetzner.vapepay.store"
-      dns01:
-        route53:
-          region: eu-central-1
-          accessKeyID: AKIAIOSFODNN7EXAMPLE
-          secretAccessKeySecretRef:
-            name: aws-credentials
-            key: aws_secret_access_key
-          # you can also assume a role with these credentials
-          #   role: arn:aws:iam::YYYYYYYYYYYY:role/dns-manager
+      - selector:
+          dnsZones:
+            - "hetzner.vapepay.store"
+        dns01:
+          route53:
+            region: us-east-1
+            accessKeyID: AKIAX3XVZEJ5OP6WOBNC
+            secretAccessKeySecretRef:
+              name: aws-credentials
+              key: aws_secret_access_key
+            # you can also assume a role with these credentials
+            role: arn:aws:iam::540607586938:user/externatdns
