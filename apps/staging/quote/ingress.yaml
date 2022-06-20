@@ -5,15 +5,16 @@ metadata:
   namespace: monitoring
   annotations:
     kubernetes.io/tls-acme: "true"
-    cert-manager.io/cluster-issuer: global-issuer
+    cert-manager.io/cluster-issuer: "letsencrypt-staging-dns"
+    cert-manager.io/acme-challenge-type: dns01
 spec:
   ingressClassName: apisix
   tls:
     - hosts:
-        - quote.glegal.local
+        - quote.hetzner.vapepay.store
       secretName: quote-cert
   rules:
-    - host: "quote.glegal.local"
+    - host: "quote.hetzner.vapepay.store"
       http:
         paths:
           - path: /

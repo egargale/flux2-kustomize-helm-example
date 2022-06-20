@@ -6,15 +6,16 @@ metadata:
   namespace: ingress-apisix
   annotations:
     kubernetes.io/tls-acme: "true"
-    cert-manager.io/cluster-issuer: global-issuer
+    cert-manager.io/cluster-issuer: "letsencrypt-staging-dns"
+    cert-manager.io/acme-challenge-type: dns01
 spec:
   ingressClassName: apisix
   tls:
     - hosts:
-        - dashboard.glegal.local
+        - dashboard.hetzner.vapepay.store
       secretName: apisix-dashboard-cert
   rules:
-    - host: "dashboard.glegal.local"
+    - host: "dashboard.hetzner.vapepay.store"
       http:
         paths:
           - path: /

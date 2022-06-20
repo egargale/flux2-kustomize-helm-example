@@ -1,37 +1,23 @@
----
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: my-selfsigned-ca
-  namespace: cert-manager
-spec:
-  isCA: true
-  commonName: my-selfsigned-ca
-  secretName: root-secret
-  privateKey:
-    algorithm: ECDSA
-    size: 256
-  issuerRef:
-    name: global-issuer
-    kind: ClusterIssuer
-    group: cert-manager.io
-
----
-apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  name: my-ca-issuer
-  namespace: cert-manager
-spec:
-  ca:
-    secretName: root-secret
-
----
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
-  name: global-issuer
+  name: letsencrypt-staging-dns
 spec:
-  selfSigned: {}
-
-
+  acme:
+    email: enrico.gargale@gmail.com
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: example-issuer-account-key
+    solvers:
+    - selector:
+        dnsZones:
+          - "hetzner.vapepay.store"
+      dns01:
+        route53:
+          region: eu-central-1
+          accessKeyID: AKIAIOSFODNN7EXAMPLE
+          secretAccessKeySecretRef:
+            name: aws-credentials
+            key: aws_secret_access_key
+          # you can also assume a role with these credentials
+          #   role: arn:aws:iam::YYYYYYYYYYYY:role/dns-manager

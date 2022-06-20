@@ -6,15 +6,16 @@ metadata:
   namespace: dapr-system
   annotations:
     kubernetes.io/tls-acme: "true"
-    cert-manager.io/cluster-issuer: global-issuer
+    cert-manager.io/cluster-issuer: "letsencrypt-staging-dns"
+    cert-manager.io/acme-challenge-type: dns01
 spec:
   ingressClassName: apisix
   tls:
     - hosts:
-        - dapr.glegal.local
+        - dapr.hetzner.vapepay.store
       secretName: dapr-dashboard-cert
   rules:
-    - host: "dapr.glegal.local"
+    - host: "dapr.hetzner.vapepay.store"
       http:
         paths:
           - path: /
