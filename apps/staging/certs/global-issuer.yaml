@@ -4,7 +4,7 @@ metadata:
   name: letsencrypt-staging-dns
 spec:
   acme:
-    email: enrico.gargale@gmail.com
+    email: enrico.gargale@vapepay.store
     server: https://acme-staging-v02.api.letsencrypt.org/directory
     privateKeySecretRef:
       name: letsencrypt-staging-dns
@@ -15,9 +15,10 @@ spec:
         dns01:
           route53:
             region: us-east-1
+            hostedZoneID: Z00792382KR27YBDMKK8J
             accessKeyID: AKIAX3XVZEJ5OP6WOBNC
             secretAccessKeySecretRef:
               name: aws-credentials
               key: aws_secret_access_key
             # you can also assume a role with these credentials
-            role: arn:aws:iam::540607586938:user/externatdns
+            # role: arn:aws:iam::540607586938:user/externatdns

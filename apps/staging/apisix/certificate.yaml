@@ -1,0 +1,22 @@
+---
+apiVersion: certmanager.k8s.io/v1
+kind: Certificate
+metadata:
+  name: ingress-apisix-cert
+  namespace: ingress-apisix
+spec:
+  secretName: ingress-apisix-cert-secret
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-staging-dns
+  commonName: "*.hetzner.vapepay.store"
+  dnsNames:
+    - "*.hetzner.vapepay.store"
+    - hetzner.vapepay.store
+  acme:
+    config:
+      - dns01:
+          provider: aws-route53
+        domains:
+          - "*.hetzner.vapepay.store"
+          - hetzner.vapepay.store
