@@ -7,7 +7,7 @@ spec:
     email: enrico.gargale@gmail.com
     server: https://acme-staging-v02.api.letsencrypt.org/directory
     privateKeySecretRef:
-      name: example-issuer-account-key
+      name: letsencrypt-staging-dns
     solvers:
       - selector:
           dnsZones:

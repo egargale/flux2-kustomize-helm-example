@@ -5,7 +5,7 @@ metadata:
   name: "apisix-dashboard-ingress"
   namespace: ingress-apisix
   annotations:
-    kubernetes.io/tls-acme: "true"
+    # kubernetes.io/tls-acme: "true"
     cert-manager.io/cluster-issuer: "letsencrypt-staging-dns"
     cert-manager.io/acme-challenge-type: dns01
 spec:
