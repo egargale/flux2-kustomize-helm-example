@@ -38,18 +38,14 @@ spec:
         load-balancer.hetzner.cloud/uses-proxyprotocol: "false"
       tls:
         enabled: true
+        http2:
+          enabled: true
       stream: # L4 proxy (TCP/UDP)
         enabled: true
         only: false
         tcp:
           - 9100
           - 9110
-        annotations:
-          load-balancer.hetzner.cloud/name: "lb11"
-          load-balancer.hetzner.cloud/use-private-ip: "true"
-          load-balancer.hetzner.cloud/disable-private-ingress: "true"
-          load-balancer.hetzner.cloud/ipv6-disabled: "true"
-          load-balancer.hetzner.cloud/uses-proxyprotocol: "true"
     admin:
       enabled: true
       type: LoadBalancer
@@ -58,7 +54,7 @@ spec:
         load-balancer.hetzner.cloud/use-private-ip: "true"
         load-balancer.hetzner.cloud/disable-private-ingress: "true"
         load-balancer.hetzner.cloud/ipv6-disabled: "true"
-        load-balancer.hetzner.cloud/uses-proxyprotocol: "true"
+        load-balancer.hetzner.cloud/uses-proxyprotocol: "false"
       allow:
         ipList:
           - 127.0.0.1/24

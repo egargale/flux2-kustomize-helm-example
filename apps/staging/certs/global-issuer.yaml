@@ -22,3 +22,27 @@ spec:
               key: aws_secret_access_key
             # you can also assume a role with these credentials
             # role: arn:aws:iam::540607586938:user/externatdns
+
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-production-dns
+spec:
+  acme:
+    email: enrico.gargale@vapepay.store
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-production-dns
+    solvers:
+      - selector:
+          dnsZones:
+            - "hetzner.vapepay.store"
+        dns01:
+          route53:
+            region: us-east-1
+            hostedZoneID: Z00792382KR27YBDMKK8J
+            accessKeyID: AKIAX3XVZEJ5OP6WOBNC
+            secretAccessKeySecretRef:
+              name: aws-credentials
+              key: aws_secret_access_key
