@@ -4,4 +4,3 @@ namespace: ingress-apisix
 
 resources:
   - ingress.yaml
-  - externalsecret.yaml
