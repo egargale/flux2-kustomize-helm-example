@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: ingress-apisix
 resources:
   - namespace.yaml
+  - externalsecret.yaml
   - release.yaml
 # configMapGenerator:
 #   - name: redis-values
