@@ -4,6 +4,7 @@ namespace: ingress-apisix
 
 resources:
   - ../../base/apisix
+  - ingress-apisix-release.yaml
   - ingress.yaml
 patchesStrategicMerge:
   - local-values.yaml
