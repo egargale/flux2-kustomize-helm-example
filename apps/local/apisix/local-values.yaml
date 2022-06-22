@@ -41,7 +41,8 @@ spec:
     admin:
       enabled: true
       type: LoadBalancer
-      annotations:
+      credentials:
+        admin: 111111111
       allow:
         ipList:
           - 127.0.0.1/24
