@@ -19,6 +19,6 @@ spec:
   values:
     ingress-controller:
       enabled: false
-    admin:
-      credentials:
-        admin: 2e249deb-bd15-48e9-8599-e01b2aeda77f
+    # admin:
+    #   credentials:
+    #     admin: 2e249deb-bd15-48e9-8599-e01b2aeda77f
