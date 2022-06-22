@@ -19,5 +19,8 @@ spec:
   valuesFrom:
     - kind: ConfigMap
       name: base-values
-      # valuesKey: values-base.yaml
       optional: false
+    - kind: Secret
+      name: admin-token
+      valuesKey: token
+      targetPath: admin.credentials.admin
