@@ -5,12 +5,14 @@ namespace: ingress-apisix
 resources:
   - ../../base/apisix
   - ingress.yaml
-patchesStrategicMerge:
-  - local-values.yaml
-generatorOptions:
-  disableNameSuffixHash: true
+# patchesStrategicMerge:
+#   - local-values.yaml
+#   - token-secret.yaml
 
-secretGenerator:
-  - name: apisix-admin-local-secret
-    literals:
-      - token=11111111111
+# generatorOptions:
+#   disableNameSuffixHash: true
+
+# secretGenerator:
+#   - name: apisix-admin-local-secret
+#     literals:
+#       - admin.credentials.admin=11111111111

@@ -41,6 +41,10 @@ spec:
     admin:
       enabled: true
       type: LoadBalancer
+      credentials:
+        valuesFrom:
+          - kind: Secret
+            admin: apisix-admin-secret
       allow:
         ipList:
           - 127.0.0.1/24

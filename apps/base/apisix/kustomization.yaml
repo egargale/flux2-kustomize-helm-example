@@ -4,3 +4,9 @@ namespace: ingress-apisix
 resources:
   - namespace.yaml
   - release.yaml
+configMapGenerator:
+  - name: base-values
+    files:
+      - values.yaml=values-base.yaml
+configurations:
+  - kustomizeconfig.yaml

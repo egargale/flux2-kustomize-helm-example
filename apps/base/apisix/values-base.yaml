@@ -1,0 +1,52 @@
+dashboard:
+  enabled: true
+ingress-controller:
+  enabled: true
+config:
+  logLevel: "debug"
+  apisix:
+    serviceName: apisix-admin
+    serviceNamespace: ingress-apisix
+gateway:
+  type: LoadBalancer
+  tls:
+    enabled: true
+    http2:
+      enabled: true
+  stream: # L4 proxy (TCP/UDP)
+    enabled: true
+    only: false
+    tcp:
+      - 9100
+      - 9110
+admin:
+  enabled: true
+  type: LoadBalancer
+  credentials:
+    valuesFrom:
+      - kind: Secret
+        admin: apisix-admin-secret
+  allow:
+    ipList:
+      - 127.0.0.1/24
+      - 0.0.0.0/0
+apisix:
+  enabled: true
+  podAnnotations:
+    dapr.io/enabled: "true"
+    dapr.io/app-id: "apisix-gateway"
+    dapr.io/app-port: "9080"
+    dapr.io/enable-metrics: "true"
+    dapr.io/metrics-port: "9099"
+    dapr.io/sidecar-listen-addresses: 0.0.0.0
+pluginAttrs:
+  prometheus:
+    export_addr:
+      ip: "0.0.0.0"
+      port: 9091
+etcd:
+  host: # it's possible to define multiple etcd hosts addresses of the same etcd cluster.
+    - "http://apisix-etcd.ingress-apisix.svc.cluster.local:2379"
+  prefix: "/apisix" # apisix configurations prefix
+  timeout: 30 # 30 seconds
+  replicaCount: 1
