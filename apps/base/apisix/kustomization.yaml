@@ -4,6 +4,7 @@ namespace: ingress-apisix
 resources:
   - namespace.yaml
   - admin-token.yaml
+  - externalsecret.yaml
   - release.yaml
 
 configMapGenerator:
