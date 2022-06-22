@@ -7,7 +7,6 @@ resources:
   - ingress.yaml
 patchesStrategicMerge:
   - local-values.yaml
-  - token-secret.yaml
 
 # generatorOptions:
 #   disableNameSuffixHash: true
