@@ -42,10 +42,11 @@ spec:
       enabled: true
       type: LoadBalancer
       credentials:
+        admin: token
         valuesFrom:
           - kind: Secret
             name: apisix-admin-local-secret
-            valuesKey: admin
+            valuesKey: token
             # targetPath: admin
       allow:
         ipList:

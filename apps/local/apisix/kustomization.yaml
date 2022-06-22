@@ -13,4 +13,4 @@ generatorOptions:
 secretGenerator:
   - name: apisix-admin-local-secret
     literals:
-      - admin=cippalippa
+      - token=11111111111
