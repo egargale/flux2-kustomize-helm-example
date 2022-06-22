@@ -21,6 +21,6 @@ spec:
       name: base-values
       optional: false
     - kind: Secret
-      name: admin-token
+      name: admin-token-ext
       valuesKey: token
       targetPath: admin.credentials.admin
