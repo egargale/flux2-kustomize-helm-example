@@ -31,6 +31,6 @@ spec:
         clusterName: "default"
   valuesFrom:
     - kind: Secret
-      name: admin-token
+      name: admin-token-ext
       valuesKey: token
       targetPath: config.apisix.adminKey
