@@ -1,8 +1,16 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: ingress-apisix
+
 resources:
   - ../../base/apisix
   - ingress.yaml
 patchesStrategicMerge:
   - local-values.yaml
+generatorOptions:
+  disableNameSuffixHash: true
+
+secretGenerator:
+  - name: apisix-admin-local-secret
+    literals:
+      - admin=1f2d1e2e67df
