@@ -5,9 +5,9 @@ namespace: ingress-apisix
 resources:
   - ../../base/apisix
   - ingress.yaml
-# patchesStrategicMerge:
-#   - local-values.yaml
-#   - token-secret.yaml
+patchesStrategicMerge:
+  - local-values.yaml
+  - token-secret.yaml
 
 # generatorOptions:
 #   disableNameSuffixHash: true
