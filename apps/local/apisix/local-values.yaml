@@ -19,4 +19,4 @@ spec:
   values:
     admin:
       credentials:
-        admin: 1111111111
+        admin: 123456
