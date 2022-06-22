@@ -27,5 +27,10 @@ spec:
         serviceName: apisix-admin
         serviceNamespace: ingress-apisix
         servicePort: 9180
-        adminKey: "2e249deb-bd15-48e9-8599-e01b2aeda77f"
+        # adminKey: "2e249deb-bd15-48e9-8599-e01b2aeda77f"
         clusterName: "default"
+  valuesFrom:
+    - kind: Secret
+      name: admin-token
+      valuesKey: token
+      targetPath: config.apisix.adminKey

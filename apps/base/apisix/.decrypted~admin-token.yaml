@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: Secret
-metadata:
-    name: admin-token
-type: Opaque
-stringData:
-    token: 2e249deb-bd15-48e9-8599-e01b2aeda88e
