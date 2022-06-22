@@ -33,8 +33,6 @@ spec:
         load-balancer.hetzner.cloud/use-private-ip: "true"
         load-balancer.hetzner.cloud/disable-private-ingress: "true"
         load-balancer.hetzner.cloud/ipv6-disabled: "false"
-        # load-balancer.hetzner.cloud/location: "${location}"
-        # load-balancer.hetzner.cloud/type: "${load_balancer_type}"
         load-balancer.hetzner.cloud/uses-proxyprotocol: "false"
       tls:
         enabled: true
@@ -56,9 +54,11 @@ spec:
         load-balancer.hetzner.cloud/ipv6-disabled: "true"
         load-balancer.hetzner.cloud/uses-proxyprotocol: "false"
       credentials:
-        valuesFrom:   
+        valuesFrom:
           - kind: Secret
-            admin: apisix-admin-secret
+            name: apisix-admin-secret
+            valuesKey: admin
+            targetPath: admin
       allow:
         ipList:
           - 127.0.0.1/24
