@@ -23,8 +23,8 @@ spec:
   #     optional: false
   values:
     apisix:
-    serviceName: apisix-admin
-    serviceNamespace: ingress-apisix
-    servicePort: 9180
-    adminKey: "2e249deb-bd15-48e9-8599-e01b2aeda77f"
-    clusterName: "default"
+      serviceName: apisix-admin
+      serviceNamespace: ingress-apisix
+      servicePort: 9180
+      adminKey: "2e249deb-bd15-48e9-8599-e01b2aeda77f"
+      clusterName: "default"
