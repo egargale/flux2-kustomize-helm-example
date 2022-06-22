@@ -1,7 +1,33 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: admin-token
+    name: admin-token
 type: Opaque
 stringData:
-  token: 2e249deb-bd15-48e9-8599-e01b2aeda88e
+    token: ENC[AES256_GCM,data:fJy/1hVlDGzth3S8TImsfQak4U1YmWCvxMkaIHoZZR9vxuXF,iv:5LWUAThAVAq/Q5GNvnnPZpMX5SqSXWwXD2H/gvwQbbc=,tag:LIdT2M0Rt3gZZDd2WmdLIA==,type:str]
+sops:
+    kms: []
+    gcp_kms: []
+    azure_kv: []
+    hc_vault: []
+    age: []
+    lastmodified: "2022-06-22T18:24:08Z"
+    mac: ENC[AES256_GCM,data:xJRjboog0ynl/zr4YvZGZxgIaPiu5JtDGnUuUw2q4UnZc6RFdH5NCUMZS7oHlZf6aBgHSwX/aRYmmq8ugSYa+QAoBCrUrYP452kgZGd/ezvcz/b44XC6J89qy/FsL2i3mvFt7QXBgq3gXzCYAALjGLFtNtzSbBu7wARNPFizE+o=,iv:zo2vHf6HLuBtn7aEDbol3QClXULonXmmI5dB2ByIiyU=,tag:sPCdKQ7cLbwTnPRdT40sug==,type:str]
+    pgp:
+        - created_at: "2022-06-22T18:24:07Z"
+          enc: |
+            -----BEGIN PGP MESSAGE-----
+
+            hQEMA1PDY17aMF/BAQf+IrMfKZ9wJarM3njbpDG5qjYtHMYJ/HidA1PjvILN2zAr
+            mq/s26HpsIR7L513x1jtJ/+bkLZEOPR5m3TAPTL9RV4WltwZol4wKdnJUJ+w/8Jj
+            zf9BT1xZ0Vm2WUaKVGS2pCTTdXjCuIImkyQ9/doTaKv1ck7EeUSt4zklH0134MRD
+            lhoi9l7ylq0U6yqhjBqbMLSY7UeVzbioHEYVB2HYhfT3gBgT7IXdDWQNQKGrjCDV
+            vQGsI2LojrzPLfHETSVv3ahsq4Y2h80Q2nuQmQ64mQanr/724bI0eSMjuBfKqTc6
+            4Ma2nOevq9UQQinKA94yD8CkjRaMIOMkpC7J2NlLd9JeAXLaIHExH7g5duoA9rjY
+            PfmuJ5q1aeJejLALbH0HJIFXJOQbE3T5ERUoB97gK7aH12qgE7D5yd0glgZEaomA
+            dwkRcq2iq3DuCKmiHocidOpheXd8TvCgibfkTQaXYQ==
+            =l3cn
+            -----END PGP MESSAGE-----
+          fp: B956F8F04205E68DB4798D853B9FD16889B70FBE
+    encrypted_regex: ^(data|stringData)$
+    version: 3.7.3
