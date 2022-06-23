@@ -8,3 +8,4 @@ resources:
   - dapr.yaml
   - emqx.yaml
   - jetstack.yaml
+  - grafana.yaml

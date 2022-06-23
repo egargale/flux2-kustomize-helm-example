@@ -6,3 +6,4 @@ resources:
   - cert-manager
   - dapr
   - redis
+  - grafana
