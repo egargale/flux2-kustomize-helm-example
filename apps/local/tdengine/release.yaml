@@ -1,0 +1,20 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: tdengine
+  namespace: tdengine
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: ./tdengine-0.3.0.tgz
+      sourceRef:
+        kind: GitRepository
+        name: taosdata
+        namespace: flux-system
+      interval: 1m
+  values:
+    storage:
+      className: "local-path"
+      dataSize: "3Gi"
+      logSize: "1Gi"

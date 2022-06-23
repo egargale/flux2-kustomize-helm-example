@@ -7,3 +7,4 @@ bases:
   - ./dapr
   - ./quote
   - ./emqx
+  - ./tdengine
