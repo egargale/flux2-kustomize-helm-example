@@ -21,3 +21,4 @@ spec:
       className: "local-path"
       dataSize: "3Gi"
       logSize: "1Gi"
+    timezone: "Europe/Rome"
