@@ -21,21 +21,26 @@ spec:
       existingSecret: "grafana-credentials-ext"
       userKey: admin-user
       passwordKey: admin-password
-    ingress:
+    persistence:
+      type: pvc
       enabled: true
-      ingressClassName: apisix
-      annotations:
-        kubernetes.io/tls-acme: "true"
-        cert-manager.io/cluster-issuer: global-issuer
-      hosts:
-        - grafana.glegal.local
-        - path: /*
-          pathType: Prefix
-      #   backend:
-      #     service:
-      #       name: ssl-redirect
-      #       port:
-      tls:
-        - secretName: grafana-cert
-          hosts:
-            - grafana.glegal.local
+      storageClassName: "local-path"
+      size: 1Gi
+    # ingress:
+    #   enabled: true
+    #   ingressClassName: apisix
+    #   annotations:
+    #     kubernetes.io/tls-acme: "true"
+    #     cert-manager.io/cluster-issuer: global-issuer
+    #   hosts:
+    #     - grafana.glegal.local
+    #     - path: /*
+    #       pathType: Prefix
+    #   #   backend:
+    #   #     service:
+    #   #       name: ssl-redirect
+    #   #       port:
+    #   tls:
+    #     - secretName: grafana-cert
+    #       hosts:
+    #         - grafana.glegal.local
