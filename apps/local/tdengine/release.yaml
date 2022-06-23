@@ -14,6 +14,10 @@ spec:
         namespace: flux-system
       interval: 1m
   values:
+    image:
+      prefix: tdengine/tdengine
+      #pullPolicy: Always
+      tag: "2.6.0.4"
     storage:
       className: "local-path"
       dataSize: "3Gi"
