@@ -5,6 +5,7 @@ bases:
   - ./certs
   - ./apisix
   - ./dapr
+  - ./grafana
   - ./quote
   - ./emqx
   - ./tdengine
