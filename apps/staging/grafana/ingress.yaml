@@ -1,0 +1,26 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "grafana-ingress"
+  namespace: grafana
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: global-issuer
+spec:
+  ingressClassName: apisix
+  tls:
+    - hosts:
+        - grafana.hetzner.vapepay.store
+      secretName: grafana-cert
+  rules:
+    - host: "grafana.hetzner.vapepay.store"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "grafana"
+                port:
+                  number: 80

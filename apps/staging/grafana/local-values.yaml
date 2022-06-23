@@ -1,0 +1,46 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: grafana
+spec:
+  releaseName: grafana
+  chart:
+    spec:
+      chart: grafana
+      sourceRef:
+        kind: HelmRepository
+        name: grafana
+        namespace: flux-system
+      version: "6.x"
+  interval: 1h0m0s
+  install:
+    remediation:
+      retries: 3
+  values:
+    admin:
+      existingSecret: "grafana-credentials-ext"
+      userKey: admin-user
+      passwordKey: admin-password
+    # persistence:
+    #   type: pvc
+    #   enabled: true
+    #   storageClassName: "local-path"
+    #   size: 1Gi
+    # ingress:
+    #   enabled: true
+    #   ingressClassName: apisix
+    #   annotations:
+    #     kubernetes.io/tls-acme: "true"
+    #     cert-manager.io/cluster-issuer: global-issuer
+    #   hosts:
+    #     - grafana.glegal.local
+    #     - path: /*
+    #       pathType: Prefix
+    #   #   backend:
+    #   #     service:
+    #   #       name: ssl-redirect
+    #   #       port:
+    #   tls:
+    #     - secretName: grafana-cert
+    #       hosts:
+    #         - grafana.glegal.local
