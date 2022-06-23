@@ -4,6 +4,6 @@ namespace: grafana
 
 resources:
   - ../../../infrastructure/grafana
-  # - ingress.yaml
+  - ingress.yaml
 patchesStrategicMerge:
   - local-values.yaml
