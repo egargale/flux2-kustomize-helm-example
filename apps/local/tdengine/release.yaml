@@ -7,7 +7,7 @@ spec:
   interval: 5m
   chart:
     spec:
-      chart: ./helm/tdengine
+      chart: ./helm/tdengine-0.3.0.tgz
       sourceRef:
         kind: GitRepository
         name: taosdata
