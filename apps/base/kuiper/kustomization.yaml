@@ -1,0 +1,4 @@
+namespace: emqx
+
+resources:
+  - release.yaml

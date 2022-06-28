@@ -8,4 +8,5 @@ bases:
   - ./grafana
   - ./quote
   - ./emqx
+  - ./kuiper
   - ./tdengine
